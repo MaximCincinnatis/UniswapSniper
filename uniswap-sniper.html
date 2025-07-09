@@ -722,6 +722,9 @@
             console.log('Page loaded');
             console.log('Ethers available:', typeof ethers !== 'undefined');
             
+            // Initialize quote section with default slippage
+            document.getElementById('slippageTolerance').textContent = '50%';
+            
             // Check if ethers is loaded
             if (typeof ethers === 'undefined') {
                 document.getElementById('status').textContent = 'Error: Ethers.js library failed to load. Please refresh the page.';
@@ -962,8 +965,10 @@
             // Clear amount since the base currency changed
             document.getElementById('amount').value = '';
             
-            // Hide quote section since we need new calculations
-            document.getElementById('quoteSection').classList.add('hidden');
+            // Reset quote section values but keep it visible
+            document.getElementById('expectedOutput').textContent = '-';
+            document.getElementById('minimumReceived').textContent = '-';
+            document.getElementById('priceImpact').textContent = '-';
         }
         
         // Check approval status
@@ -1422,6 +1427,9 @@
                 // Show quote section
                 quoteSection.classList.remove('hidden');
                 
+                // Build path for price impact calculation
+                const path = buildPath(window.fromTokenInfo.address, window.toTokenInfo.address);
+                
                 // Calculate actual price impact
                 const priceImpact = await calculatePriceImpact(
                     window.fromTokenInfo.address,
@@ -1456,26 +1464,43 @@
             } catch (error) {
                 console.error('Error fetching quote:', error);
                 
+                // Show specific error message
+                let errorMessage = 'Error fetching quote';
+                
+                if (error.message?.includes('call revert exception')) {
+                    errorMessage = 'No pool found or insufficient liquidity';
+                } else if (error.message?.includes('INSUFFICIENT_OUTPUT_AMOUNT')) {
+                    errorMessage = 'Insufficient liquidity';
+                } else if (error.message?.includes('INSUFFICIENT_LIQUIDITY')) {
+                    errorMessage = 'Insufficient liquidity in pool';
+                } else if (error.message?.includes('resolver or addr is not configured')) {
+                    errorMessage = 'Network connection issue';
+                } else if (error.reason) {
+                    errorMessage = error.reason;
+                }
+                
+                // Check if we should try the other router version
+                if (selectedRouter === 'v3' && error.message?.includes('call revert')) {
+                    console.log('V3 quote failed, trying V2...');
+                    // Try V2 as fallback
+                    selectedRouter = 'v2';
+                    // Retry the quote
+                    setTimeout(() => fetchQuote(), 100);
+                    return;
+                }
+                
                 // Don't hide quote section, show appropriate message
-                if (!pairExists) {
-                    // Pool doesn't exist yet, show placeholder
-                    expectedOutputEl.textContent = 'Waiting for pool...';
-                    minimumReceivedEl.textContent = 'Waiting for pool...';
-                    priceImpactEl.textContent = 'N/A';
-                    const slippageToleranceEl = document.getElementById('slippageTolerance');
-                    slippageToleranceEl.textContent = `${parseFloat(document.getElementById('slippage').value)}%`;
-                    quoteSection.classList.remove('hidden');
-                } else if (error.message?.includes('INSUFFICIENT')) {
-                    // Insufficient liquidity
-                    expectedOutputEl.textContent = 'Insufficient liquidity';
-                    minimumReceivedEl.textContent = 'Insufficient liquidity';
-                    priceImpactEl.textContent = 'N/A';
-                    quoteSection.classList.remove('hidden');
-                    document.getElementById('status').textContent = 'Insufficient liquidity for this trade';
-                    document.getElementById('status').className = 'status error';
-                } else {
-                    // Other error - hide section
-                    quoteSection.classList.add('hidden');
+                expectedOutputEl.textContent = errorMessage;
+                minimumReceivedEl.textContent = '-';
+                priceImpactEl.textContent = '-';
+                const slippageToleranceEl = document.getElementById('slippageTolerance');
+                slippageToleranceEl.textContent = `${parseFloat(document.getElementById('slippage').value)}%`;
+                quoteSection.classList.remove('hidden');
+                
+                // Update status if it's a liquidity issue
+                if (errorMessage.includes('liquidity') || errorMessage.includes('pool')) {
+                    document.getElementById('status').textContent = errorMessage;
+                    document.getElementById('status').className = 'status warning';
                 }
             }
         }
