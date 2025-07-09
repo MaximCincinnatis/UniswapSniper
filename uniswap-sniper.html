@@ -1,0 +1,2205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uniswap Unlimited Slippage Sniper</title>
+    
+    <!-- Ethers.js CDN with fallbacks -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script>
+        // Fallback if primary CDN fails
+        if (typeof ethers === 'undefined') {
+            document.write('<script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"><\/script>');
+        }
+    </script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #0d0e11;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #191b1f;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            color: #ffffff;
+        }
+        
+        .wallet-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #0d0e11;
+            border-radius: 12px;
+        }
+        
+        .wallet-address {
+            font-family: monospace;
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 10px;
+        }
+        
+        .balance {
+            font-size: 14px;
+            color: #10b981;
+            margin-top: 5px;
+        }
+        
+        button {
+            background-color: #ec4899;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        
+        button:hover:not(:disabled) {
+            background-color: #db2777;
+            transform: translateY(-1px);
+        }
+        
+        button:disabled {
+            background-color: #374151;
+            cursor: not-allowed;
+        }
+        
+        .swap-section {
+            margin-top: 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            background-color: #0d0e11;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #ec4899;
+        }
+        
+        .token-balance {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 4px;
+            text-align: right;
+        }
+        
+        .amount-wrapper {
+            position: relative;
+        }
+        
+        .max-button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #374151;
+            color: #9ca3af;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: auto;
+        }
+        
+        .max-button:hover {
+            background-color: #4b5563;
+            color: #ffffff;
+        }
+        
+        .slippage-group {
+            background-color: #0d0e11;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .slippage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .slippage-input {
+            width: 80px;
+            padding: 8px;
+            font-size: 14px;
+            text-align: right;
+        }
+        
+        .quote-section {
+            background-color: #0d0e11;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .quote-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .quote-label {
+            color: #9ca3af;
+        }
+        
+        .quote-value {
+            color: #ffffff;
+            font-weight: 500;
+        }
+        
+        .swap-button {
+            background-color: #ec4899;
+            margin-top: 20px;
+        }
+        
+        .swap-button:hover:not(:disabled) {
+            background-color: #db2777;
+        }
+        
+        .arrow-down {
+            text-align: center;
+            margin: 10px 0;
+            color: #9ca3af;
+            position: relative;
+        }
+        
+        .swap-tokens-button {
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            color: #9ca3af;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        
+        .swap-tokens-button:hover {
+            background-color: #4b5563;
+            color: #ffffff;
+            transform: rotate(180deg);
+        }
+        
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #9ca3af;
+        }
+        
+        .error {
+            color: #ef4444;
+        }
+        
+        .success {
+            color: #10b981;
+        }
+        
+        .warning {
+            color: #f59e0b;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .pair-status {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .pair-status.monitoring {
+            background-color: #1f2937;
+            color: #fbbf24;
+            border: 1px solid #fbbf24;
+        }
+        
+        .pair-status.live {
+            background-color: #065f46;
+            color: #10b981;
+            border: 1px solid #10b981;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .monitoring-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #fbbf24;
+            border-radius: 50%;
+            margin-left: 8px;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
+        .saved-pairs {
+            background-color: #0d0e11;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .saved-pairs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .saved-pairs-title {
+            font-size: 14px;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+        
+        .clear-pairs-btn {
+            background-color: transparent;
+            color: #ef4444;
+            font-size: 12px;
+            padding: 4px 8px;
+            border: 1px solid #ef4444;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: auto;
+        }
+        
+        .clear-pairs-btn:hover {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .pair-item {
+            background-color: #191b1f;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .pair-item:hover {
+            border-color: #ec4899;
+            background-color: #1f2937;
+        }
+        
+        .pair-tokens {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .pair-arrow {
+            color: #9ca3af;
+            margin: 0 8px;
+        }
+        
+        .use-pair-btn {
+            background-color: #374151;
+            color: #ffffff;
+            font-size: 12px;
+            padding: 4px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: auto;
+        }
+        
+        .use-pair-btn:hover {
+            background-color: #ec4899;
+        }
+        
+        .token-select-wrapper {
+            position: relative;
+        }
+        
+        .token-dropdown-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #374151;
+            color: #9ca3af;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: auto;
+        }
+        
+        .token-dropdown-toggle:hover {
+            background-color: #4b5563;
+            color: #ffffff;
+        }
+        
+        .token-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #191b1f;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            margin-top: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .token-option {
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .token-option:hover {
+            background-color: #374151;
+        }
+        
+        .token-symbol {
+            font-weight: 600;
+            color: #ffffff;
+        }
+        
+        .token-address {
+            font-size: 12px;
+            color: #9ca3af;
+            font-family: monospace;
+        }
+        
+        .token-symbol-label {
+            position: absolute;
+            top: -20px;
+            right: 0;
+            font-size: 12px;
+            color: #ec4899;
+            font-weight: 600;
+            background-color: #191b1f;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Uniswap Sniper</h1>
+        <p style="text-align: center; color: #9ca3af; font-size: 14px; margin-top: -20px; margin-bottom: 20px;">
+            Unlimited Slippage • Fast Execution • Direct Contract Calls
+        </p>
+        
+        <!-- Wallet Section -->
+        <div class="wallet-section">
+            <button id="connectButton" onclick="connectWallet()">Connect Wallet</button>
+            <div id="walletInfo" class="hidden">
+                <div class="wallet-address" id="walletAddress"></div>
+                <div class="balance" id="ethBalance"></div>
+            </div>
+        </div>
+        
+        <!-- Swap Section -->
+        <div class="swap-section" id="swapSection" class="hidden">
+            <!-- Saved Pairs -->
+            <div class="saved-pairs hidden" id="savedPairsSection">
+                <div class="saved-pairs-header">
+                    <span class="saved-pairs-title">Recent Pairs</span>
+                    <button class="clear-pairs-btn" onclick="clearSavedPairs()">Clear All</button>
+                </div>
+                <div id="savedPairsList"></div>
+            </div>
+            
+            <!-- From Token -->
+            <div class="input-group">
+                <label for="fromToken">From Token Address</label>
+                <div class="token-select-wrapper">
+                    <input type="text" id="fromToken" placeholder="0x... or type USDC, ETH, TITANX" onchange="onTokenChange('from')">
+                    <button class="token-dropdown-toggle" onclick="toggleTokenDropdown('from')">▼</button>
+                    <div class="token-dropdown hidden" id="fromTokenDropdown"></div>
+                </div>
+                <div class="token-balance" id="fromTokenBalance">Balance: -</div>
+            </div>
+            
+            <!-- Amount -->
+            <div class="input-group">
+                <label for="amount">Amount</label>
+                <div class="amount-wrapper">
+                    <input type="number" id="amount" placeholder="0.0" step="any" oninput="onAmountChange()">
+                    <button class="max-button" onclick="setMaxAmount()">MAX</button>
+                </div>
+            </div>
+            
+            <!-- Arrow with Swap Button -->
+            <div class="arrow-down">
+                <button class="swap-tokens-button" onclick="swapTokens()" title="Swap tokens">
+                    ↕
+                </button>
+            </div>
+            
+            <!-- Pair Status -->
+            <div id="pairStatus" class="pair-status hidden">
+                <span id="pairStatusText">Checking pair...</span>
+                <span class="monitoring-dot"></span>
+            </div>
+            
+            <!-- To Token -->
+            <div class="input-group">
+                <label for="toToken">To Token Address</label>
+                <div class="token-select-wrapper">
+                    <input type="text" id="toToken" placeholder="0x... or type USDC, ETH, TITANX" onchange="onTokenChange('to')">
+                    <button class="token-dropdown-toggle" onclick="toggleTokenDropdown('to')">▼</button>
+                    <div class="token-dropdown hidden" id="toTokenDropdown"></div>
+                </div>
+                <div class="token-balance" id="toTokenBalance">Balance: -</div>
+            </div>
+            
+            <!-- Slippage Settings -->
+            <div class="slippage-group">
+                <div class="slippage-header">
+                    <label style="margin-bottom: 0;">Slippage Tolerance</label>
+                    <div>
+                        <input type="number" id="slippage" class="slippage-input" value="100" step="any" min="0" oninput="onSlippageChange()">
+                        <span>%</span>
+                    </div>
+                </div>
+                <div style="font-size: 11px; color: #9ca3af; margin-top: 8px;">
+                    No limits! Set any % (even 10,000%)
+                </div>
+            </div>
+            
+            <!-- Auto-Swap Settings -->
+            <div class="slippage-group" style="background-color: #7f1d1d; border: 1px solid #ef4444;">
+                <div class="slippage-header">
+                    <label style="margin-bottom: 0; color: #ef4444;">⚡ Auto-Swap Mode</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="autoSwap" onchange="onAutoSwapChange()" style="width: 20px; height: 20px; cursor: pointer;">
+                        <span style="color: #fbbf24; font-size: 12px;">DANGER</span>
+                    </div>
+                </div>
+                <div style="font-size: 11px; color: #fbbf24; margin-top: 8px;">
+                    ⚠️ Will execute swap INSTANTLY when pair is found!
+                </div>
+            </div>
+            
+            <!-- Quote Section -->
+            <div class="quote-section hidden" id="quoteSection">
+                <div class="quote-row">
+                    <span class="quote-label">Expected Output:</span>
+                    <span class="quote-value" id="expectedOutput">-</span>
+                </div>
+                <div class="quote-row">
+                    <span class="quote-label">Minimum Received:</span>
+                    <span class="quote-value" id="minimumReceived">-</span>
+                </div>
+                <div class="quote-row">
+                    <span class="quote-label">Expected Price Impact:</span>
+                    <span class="quote-value" id="priceImpact">-</span>
+                </div>
+                <div class="quote-row">
+                    <span class="quote-label">Your Slippage Tolerance:</span>
+                    <span class="quote-value" id="slippageTolerance">-</span>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="approveButton" class="swap-button" style="background-color: #4b5563; flex: 1;" onclick="approveToken()" disabled>
+                    Approve Token
+                </button>
+                <button id="swapButton" class="swap-button" style="flex: 2;" onclick="executeSwap()" disabled>
+                    Connect Wallet to Swap
+                </button>
+            </div>
+        </div>
+        
+        <!-- Status Messages -->
+        <div class="status" id="status"></div>
+    </div>
+    
+    <script>
+        // Global variables
+        let provider;
+        let signer;
+        let userAddress;
+        
+        // Token cache for speed
+        const tokenCache = new Map();
+        
+        // Common tokens for quick access
+        const COMMON_TOKENS = {
+            'ETH': '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+            'WETH': '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+            'USDC': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+            'USDT': '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+            'DAI': '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+            'WBTC': '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+            'TITANX': '0xF19308F923582A6f7c465e5CE7a9Dc1BEC6665B1'
+        };
+        
+        // Minimal ERC20 ABI for balance and approval
+        const ERC20_ABI = [
+            'function balanceOf(address owner) view returns (uint256)',
+            'function decimals() view returns (uint8)',
+            'function symbol() view returns (string)',
+            'function approve(address spender, uint256 amount) returns (bool)',
+            'function allowance(address owner, address spender) view returns (uint256)'
+        ];
+        
+        // Uniswap V2 Router address (mainnet)
+        const UNISWAP_V2_ROUTER = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D';
+        
+        // Uniswap V3 SwapRouter address (mainnet)
+        const UNISWAP_V3_ROUTER = '0xE592427A0AEce92De3Edee1F18E0157C05861564';
+        
+        // WETH address (mainnet)
+        const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
+        
+        // Uniswap V2 Router ABI (minimal)
+        const UNISWAP_V2_ROUTER_ABI = [
+            'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)',
+            'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)',
+            'function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts)',
+            'function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)'
+        ];
+        
+        // Uniswap V3 SwapRouter ABI (minimal)
+        const UNISWAP_V3_ROUTER_ABI = [
+            'function exactInputSingle(tuple(address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96) params) external payable returns (uint256 amountOut)',
+            'function exactInput(tuple(bytes path, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum) params) external payable returns (uint256 amountOut)'
+        ];
+        
+        // V3 fee tiers
+        const V3_FEE_TIERS = [500, 3000, 10000]; // 0.05%, 0.3%, 1%
+        
+        // Router contract instances
+        let routerContract;
+        let v3RouterContract;
+        let selectedRouter = 'v2'; // Track which version to use
+        
+        // Pair monitoring
+        let pairMonitorInterval;
+        let pairExists = false;
+        
+        // Uniswap V2 Factory ABI for pair checking
+        const FACTORY_ABI = [
+            'function getPair(address tokenA, address tokenB) view returns (address)'
+        ];
+        const FACTORY_ADDRESS = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f';
+        
+        // Uniswap V3 Factory
+        const V3_FACTORY_ADDRESS = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
+        const V3_FACTORY_ABI = [
+            'function getPool(address tokenA, address tokenB, uint24 fee) view returns (address)'
+        ];
+        
+        // Uniswap V2 Pair ABI for reserves
+        const PAIR_ABI = [
+            'function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)',
+            'function token0() view returns (address)',
+            'function token1() view returns (address)'
+        ];
+        
+        // Uniswap V3 Pool ABI
+        const V3_POOL_ABI = [
+            'function liquidity() view returns (uint128)',
+            'function slot0() view returns (uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint8 feeProtocol, bool unlocked)',
+            'function token0() view returns (address)',
+            'function token1() view returns (address)'
+        ];
+        
+        // V3 Quoter for getting quotes
+        const V3_QUOTER_ADDRESS = '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6';
+        const V3_QUOTER_ABI = [
+            'function quoteExactInputSingle(address tokenIn, address tokenOut, uint24 fee, uint256 amountIn, uint160 sqrtPriceLimitX96) external returns (uint256 amountOut)'
+        ];
+        
+        // V3 SwapRouter ABI
+        const V3_SWAP_ROUTER_ABI = [
+            {
+                "inputs": [
+                    {
+                        "components": [
+                            {"internalType": "address", "name": "tokenIn", "type": "address"},
+                            {"internalType": "address", "name": "tokenOut", "type": "address"},
+                            {"internalType": "uint24", "name": "fee", "type": "uint24"},
+                            {"internalType": "address", "name": "recipient", "type": "address"},
+                            {"internalType": "uint256", "name": "deadline", "type": "uint256"},
+                            {"internalType": "uint256", "name": "amountIn", "type": "uint256"},
+                            {"internalType": "uint256", "name": "amountOutMinimum", "type": "uint256"},
+                            {"internalType": "uint160", "name": "sqrtPriceLimitX96", "type": "uint160"}
+                        ],
+                        "internalType": "struct ISwapRouter.ExactInputSingleParams",
+                        "name": "params",
+                        "type": "tuple"
+                    }
+                ],
+                "name": "exactInputSingle",
+                "outputs": [{"internalType": "uint256", "name": "amountOut", "type": "uint256"}],
+                "stateMutability": "payable",
+                "type": "function"
+            }
+        ];
+        
+        // Initialize on page load
+        window.addEventListener('load', async () => {
+            console.log('Page loaded');
+            console.log('Ethers available:', typeof ethers !== 'undefined');
+            
+            // Check if ethers is loaded
+            if (typeof ethers === 'undefined') {
+                document.getElementById('status').textContent = 'Error: Ethers.js library failed to load. Please refresh the page.';
+                document.getElementById('status').className = 'status error';
+                console.error('Ethers.js not loaded!');
+                return;
+            }
+            
+            // Pre-initialize provider for speed
+            if (window.ethereum) {
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                routerContract = new ethers.Contract(
+                    UNISWAP_V2_ROUTER, 
+                    UNISWAP_V2_ROUTER_ABI, 
+                    provider
+                );
+                v3RouterContract = new ethers.Contract(
+                    UNISWAP_V3_ROUTER,
+                    V3_SWAP_ROUTER_ABI,
+                    provider
+                );
+            }
+            
+            // Load saved token pairs
+            loadSavedPairs();
+            
+            // Check if wallet was previously connected
+            if (window.ethereum && window.ethereum.selectedAddress) {
+                connectWallet();
+            }
+        });
+        
+        // Keyboard shortcuts for speed
+        document.addEventListener('keydown', async (e) => {
+            // Enter key to swap
+            if (e.key === 'Enter' && !e.shiftKey) {
+                const swapButton = document.getElementById('swapButton');
+                if (!swapButton.disabled) {
+                    e.preventDefault();
+                    executeSwap();
+                }
+            }
+            
+            // Ctrl/Cmd + M for max amount
+            if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+                e.preventDefault();
+                setMaxAmount();
+            }
+        });
+        
+        // Save and load token pairs
+        function saveCurrentPair() {
+            if (window.fromTokenInfo && window.toTokenInfo) {
+                const pairs = JSON.parse(localStorage.getItem('savedPairs') || '[]');
+                const newPair = {
+                    from: window.fromTokenInfo.address,
+                    to: window.toTokenInfo.address,
+                    fromSymbol: window.fromTokenInfo.symbol,
+                    toSymbol: window.toTokenInfo.symbol
+                };
+                
+                // Avoid duplicates
+                const exists = pairs.some(p => 
+                    p.from === newPair.from && p.to === newPair.to
+                );
+                
+                if (!exists) {
+                    pairs.unshift(newPair); // Add to beginning
+                    if (pairs.length > 5) pairs.pop(); // Keep only 5 recent
+                    localStorage.setItem('savedPairs', JSON.stringify(pairs));
+                }
+            }
+        }
+        
+        function loadSavedPairs() {
+            const pairs = JSON.parse(localStorage.getItem('savedPairs') || '[]');
+            const savedPairsSection = document.getElementById('savedPairsSection');
+            const savedPairsList = document.getElementById('savedPairsList');
+            
+            if (pairs.length > 0) {
+                savedPairsSection.classList.remove('hidden');
+                savedPairsList.innerHTML = '';
+                
+                pairs.forEach(pair => {
+                    const pairDiv = document.createElement('div');
+                    pairDiv.className = 'pair-item';
+                    pairDiv.innerHTML = `
+                        <div class="pair-tokens">
+                            <span>${pair.fromSymbol}</span>
+                            <span class="pair-arrow">→</span>
+                            <span>${pair.toSymbol}</span>
+                        </div>
+                        <button class="use-pair-btn" onclick="useSavedPair('${pair.from}', '${pair.to}')">Use</button>
+                    `;
+                    savedPairsList.appendChild(pairDiv);
+                });
+            } else {
+                savedPairsSection.classList.add('hidden');
+            }
+        }
+        
+        function useSavedPair(fromAddress, toAddress) {
+            document.getElementById('fromToken').value = fromAddress;
+            document.getElementById('toToken').value = toAddress;
+            onTokenChange('from');
+            onTokenChange('to');
+        }
+        
+        function clearSavedPairs() {
+            if (confirm('Clear all saved pairs?')) {
+                localStorage.removeItem('savedPairs');
+                loadSavedPairs();
+            }
+        }
+        
+        function toggleTokenDropdown(type) {
+            const dropdown = document.getElementById(type + 'TokenDropdown');
+            const otherDropdown = document.getElementById((type === 'from' ? 'to' : 'from') + 'TokenDropdown');
+            
+            // Close other dropdown
+            otherDropdown.classList.add('hidden');
+            
+            // Toggle current dropdown
+            dropdown.classList.toggle('hidden');
+            
+            if (!dropdown.classList.contains('hidden')) {
+                populateTokenDropdown(type);
+            }
+        }
+        
+        function populateTokenDropdown(type) {
+            const dropdown = document.getElementById(type + 'TokenDropdown');
+            dropdown.innerHTML = '';
+            
+            // Add common tokens
+            Object.entries(COMMON_TOKENS).forEach(([symbol, address]) => {
+                const option = document.createElement('div');
+                option.className = 'token-option';
+                option.innerHTML = `
+                    <span class="token-symbol">${symbol}</span>
+                    <span class="token-address">${address.slice(0, 6)}...${address.slice(-4)}</span>
+                `;
+                option.onclick = () => selectToken(type, address, symbol);
+                dropdown.appendChild(option);
+            });
+            
+            // Add separator if there are saved tokens
+            const savedTokens = getSavedTokens();
+            if (savedTokens.length > 0) {
+                const separator = document.createElement('div');
+                separator.style.borderTop = '1px solid #374151';
+                separator.style.margin = '8px 0';
+                dropdown.appendChild(separator);
+                
+                // Add saved tokens
+                savedTokens.forEach(token => {
+                    const option = document.createElement('div');
+                    option.className = 'token-option';
+                    option.innerHTML = `
+                        <span class="token-symbol">${token.symbol}</span>
+                        <span class="token-address">${token.address.slice(0, 6)}...${token.address.slice(-4)}</span>
+                    `;
+                    option.onclick = () => selectToken(type, token.address, token.symbol);
+                    dropdown.appendChild(option);
+                });
+            }
+        }
+        
+        function selectToken(type, address, symbol) {
+            document.getElementById(type + 'Token').value = address;
+            document.getElementById(type + 'TokenDropdown').classList.add('hidden');
+            onTokenChange(type);
+        }
+        
+        function getSavedTokens() {
+            const pairs = JSON.parse(localStorage.getItem('savedPairs') || '[]');
+            const tokenMap = new Map();
+            
+            // Extract unique tokens from saved pairs
+            pairs.forEach(pair => {
+                if (!COMMON_TOKENS[pair.fromSymbol]) {
+                    tokenMap.set(pair.from, { address: pair.from, symbol: pair.fromSymbol });
+                }
+                if (!COMMON_TOKENS[pair.toSymbol]) {
+                    tokenMap.set(pair.to, { address: pair.to, symbol: pair.toSymbol });
+                }
+            });
+            
+            return Array.from(tokenMap.values());
+        }
+        
+        // Update token symbol label
+        function updateTokenSymbolLabel(type, symbol) {
+            const wrapper = document.querySelector(`#${type}Token`).parentElement;
+            let label = wrapper.querySelector('.token-symbol-label');
+            
+            if (!label) {
+                label = document.createElement('div');
+                label.className = 'token-symbol-label';
+                wrapper.appendChild(label);
+            }
+            
+            label.textContent = symbol;
+        }
+        
+        // Clear token symbol label
+        function clearTokenSymbolLabel(type) {
+            const wrapper = document.querySelector(`#${type}Token`).parentElement;
+            const label = wrapper.querySelector('.token-symbol-label');
+            if (label) {
+                label.remove();
+            }
+        }
+        
+        // Swap tokens (reverse from/to)
+        function swapTokens() {
+            const fromTokenInput = document.getElementById('fromToken');
+            const toTokenInput = document.getElementById('toToken');
+            
+            // Swap the input values
+            const tempAddress = fromTokenInput.value;
+            fromTokenInput.value = toTokenInput.value;
+            toTokenInput.value = tempAddress;
+            
+            // Swap the stored token info
+            const tempInfo = window.fromTokenInfo;
+            window.fromTokenInfo = window.toTokenInfo;
+            window.toTokenInfo = tempInfo;
+            
+            // Update both displays
+            if (fromTokenInput.value) {
+                onTokenChange('from');
+            }
+            if (toTokenInput.value) {
+                onTokenChange('to');
+            }
+            
+            // Clear amount since the base currency changed
+            document.getElementById('amount').value = '';
+            
+            // Hide quote section since we need new calculations
+            document.getElementById('quoteSection').classList.add('hidden');
+        }
+        
+        // Check approval status
+        async function checkApprovalStatus() {
+            if (!window.fromTokenInfo || window.fromTokenInfo.symbol === 'ETH' || !signer) return;
+            
+            const approveButton = document.getElementById('approveButton');
+            
+            try {
+                const tokenContract = new ethers.Contract(
+                    window.fromTokenInfo.address,
+                    ERC20_ABI,
+                    provider
+                );
+                
+                // Check allowance for both routers
+                const v2Allowance = await tokenContract.allowance(userAddress, UNISWAP_V2_ROUTER);
+                const v3Allowance = await tokenContract.allowance(userAddress, UNISWAP_V3_ROUTER);
+                
+                if (v2Allowance.gt(0) && v3Allowance.gt(0)) {
+                    approveButton.textContent = '✓ Approved (V2+V3)';
+                    approveButton.style.backgroundColor = '#10b981';
+                } else if (v2Allowance.gt(0)) {
+                    approveButton.textContent = '✓ V2 Approved';
+                    approveButton.style.backgroundColor = '#f59e0b';
+                } else if (v3Allowance.gt(0)) {
+                    approveButton.textContent = '✓ V3 Approved';
+                    approveButton.style.backgroundColor = '#f59e0b';
+                } else {
+                    approveButton.textContent = 'Approve Token';
+                    approveButton.style.backgroundColor = '#4b5563';
+                }
+            } catch (error) {
+                console.error('Error checking approval:', error);
+            }
+        }
+        
+        // Manual token approval
+        async function approveToken() {
+            if (!window.fromTokenInfo || window.fromTokenInfo.symbol === 'ETH') return;
+            
+            const approveButton = document.getElementById('approveButton');
+            const statusEl = document.getElementById('status');
+            
+            try {
+                approveButton.disabled = true;
+                approveButton.textContent = 'Approving...';
+                statusEl.textContent = 'Approving token for Uniswap Router...';
+                statusEl.className = 'status';
+                
+                const tokenContract = new ethers.Contract(
+                    window.fromTokenInfo.address,
+                    ERC20_ABI,
+                    signer
+                );
+                
+                // Approve both routers
+                statusEl.textContent = 'Approving for Uniswap V2...';
+                const v2tx = await tokenContract.approve(UNISWAP_V2_ROUTER, ethers.constants.MaxUint256);
+                await v2tx.wait();
+                
+                statusEl.textContent = 'Approving for Uniswap V3...';
+                const v3tx = await tokenContract.approve(UNISWAP_V3_ROUTER, ethers.constants.MaxUint256);
+                await v3tx.wait();
+                
+                statusEl.textContent = 'Token approved for both V2 and V3!';
+                statusEl.className = 'status success';
+                
+                approveButton.textContent = '✓ Approved (V2+V3)';
+                approveButton.style.backgroundColor = '#10b981';
+                
+                // Re-check ready state
+                checkReadyForQuote();
+                
+            } catch (error) {
+                console.error('Approval error:', error);
+                statusEl.textContent = 'Approval failed';
+                statusEl.className = 'status error';
+                approveButton.disabled = false;
+                approveButton.textContent = 'Retry Approval';
+            }
+        }
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.token-select-wrapper')) {
+                document.getElementById('fromTokenDropdown').classList.add('hidden');
+                document.getElementById('toTokenDropdown').classList.add('hidden');
+            }
+        });
+        
+        // Connect MetaMask wallet
+        async function connectWallet() {
+            const connectButton = document.getElementById('connectButton');
+            const statusEl = document.getElementById('status');
+            
+            try {
+                // Check if MetaMask is installed
+                if (!window.ethereum) {
+                    statusEl.textContent = 'Please install MetaMask!';
+                    statusEl.className = 'status error';
+                    return;
+                }
+                
+                // Request account access
+                connectButton.disabled = true;
+                connectButton.textContent = 'Connecting...';
+                
+                const accounts = await window.ethereum.request({ 
+                    method: 'eth_requestAccounts' 
+                });
+                
+                // Set up ethers provider and signer
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                userAddress = accounts[0];
+                
+                // Check network
+                const network = await provider.getNetwork();
+                if (network.chainId !== 1) {
+                    statusEl.textContent = 'Please switch to Ethereum Mainnet';
+                    statusEl.className = 'status error';
+                    connectButton.disabled = false;
+                    connectButton.textContent = 'Connect Wallet';
+                    return;
+                }
+                
+                // Update UI
+                document.getElementById('walletAddress').textContent = 
+                    userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
+                
+                // Get ETH balance
+                const balance = await provider.getBalance(userAddress);
+                const ethBalance = ethers.utils.formatEther(balance);
+                document.getElementById('ethBalance').textContent = 
+                    `${parseFloat(ethBalance).toFixed(4)} ETH`;
+                
+                // Show wallet info and swap section
+                document.getElementById('walletInfo').classList.remove('hidden');
+                document.getElementById('swapSection').classList.remove('hidden');
+                connectButton.classList.add('hidden');
+                
+                // Initialize router contract
+                routerContract = new ethers.Contract(
+                    UNISWAP_V2_ROUTER, 
+                    UNISWAP_V2_ROUTER_ABI, 
+                    signer
+                );
+                
+                // Update swap button
+                document.getElementById('swapButton').textContent = 'Enter token addresses';
+                
+                statusEl.textContent = 'Wallet connected successfully!';
+                statusEl.className = 'status success';
+                
+                console.log('Connected to:', userAddress);
+                console.log('ETH Balance:', ethBalance);
+                
+                // Listen for account changes
+                window.ethereum.on('accountsChanged', (accounts) => {
+                    if (accounts.length === 0) {
+                        // User disconnected wallet
+                        location.reload();
+                    } else {
+                        // User switched accounts
+                        location.reload();
+                    }
+                });
+                
+                // Listen for network changes
+                window.ethereum.on('chainChanged', () => {
+                    location.reload();
+                });
+                
+            } catch (error) {
+                console.error('Connection error:', error);
+                statusEl.textContent = 'Failed to connect wallet';
+                statusEl.className = 'status error';
+                connectButton.disabled = false;
+                connectButton.textContent = 'Connect Wallet';
+            }
+        }
+        
+        // Get token info and balance
+        async function getTokenInfo(tokenAddress) {
+            try {
+                // Check cache first
+                if (tokenCache.has(tokenAddress)) {
+                    return tokenCache.get(tokenAddress);
+                }
+                
+                // Special case for ETH - check if it's the ETH placeholder address
+                const cleanAddress = tokenAddress.toLowerCase().replace(/[^0-9a-fx]/gi, '');
+                if (cleanAddress.startsWith('0xeeee') || tokenAddress === COMMON_TOKENS['ETH']) {
+                    const balance = await provider.getBalance(userAddress);
+                    const info = {
+                        address: tokenAddress,
+                        symbol: 'ETH',
+                        decimals: 18,
+                        balance: balance
+                    };
+                    tokenCache.set(tokenAddress, info);
+                    return info;
+                }
+                
+                // Create token contract
+                const token = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+                
+                // Get token info
+                const [balance, decimals, symbol] = await Promise.all([
+                    token.balanceOf(userAddress),
+                    token.decimals(),
+                    token.symbol().catch(() => 'Unknown')
+                ]);
+                
+                const info = {
+                    address: tokenAddress,
+                    symbol: symbol,
+                    decimals: decimals,
+                    balance: balance
+                };
+                
+                // Cache for speed
+                tokenCache.set(tokenAddress, info);
+                return info;
+                
+            } catch (error) {
+                console.error('Error getting token info:', error);
+                throw new Error('Invalid token address');
+            }
+        }
+        
+        // Handle token input changes
+        async function onTokenChange(type) {
+            const tokenInput = document.getElementById(type + 'Token');
+            const balanceEl = document.getElementById(type + 'TokenBalance');
+            const statusEl = document.getElementById('status');
+            
+            let tokenAddress = tokenInput.value.trim();
+            
+            // Check if user typed a symbol instead of address
+            const upperInput = tokenAddress.toUpperCase();
+            if (COMMON_TOKENS[upperInput]) {
+                tokenAddress = COMMON_TOKENS[upperInput];
+                tokenInput.value = tokenAddress; // Update input with actual address
+            }
+            
+            if (!tokenAddress || !ethers.utils.isAddress(tokenAddress)) {
+                balanceEl.textContent = 'Balance: -';
+                clearTokenSymbolLabel(type);
+                return;
+            }
+            
+            // Check if wallet is connected
+            if (!provider || !userAddress) {
+                balanceEl.textContent = 'Balance: Connect wallet first';
+                return;
+            }
+            
+            try {
+                // Clear any previous errors
+                if (statusEl.textContent === 'Invalid token address') {
+                    statusEl.textContent = '';
+                    statusEl.className = 'status';
+                }
+                
+                balanceEl.textContent = 'Loading...';
+                const tokenInfo = await getTokenInfo(tokenAddress);
+                
+                // Format balance
+                const formattedBalance = ethers.utils.formatUnits(
+                    tokenInfo.balance, 
+                    tokenInfo.decimals
+                );
+                
+                // Format balance display based on amount size
+                let displayBalance;
+                const balanceFloat = parseFloat(formattedBalance);
+                
+                if (balanceFloat === 0) {
+                    displayBalance = '0';
+                } else if (balanceFloat < 0.000001) {
+                    displayBalance = balanceFloat.toFixed(18).replace(/\.?0+$/, '');
+                } else if (balanceFloat < 0.001) {
+                    displayBalance = balanceFloat.toFixed(8).replace(/\.?0+$/, '');
+                } else if (balanceFloat < 1) {
+                    displayBalance = balanceFloat.toFixed(6).replace(/\.?0+$/, '');
+                } else {
+                    displayBalance = balanceFloat.toFixed(6).replace(/\.?0+$/, '');
+                }
+                
+                balanceEl.textContent = `${tokenInfo.symbol} Balance: ${displayBalance}`;
+                
+                // Store token info for later use
+                if (type === 'from') {
+                    window.fromTokenInfo = tokenInfo;
+                } else {
+                    window.toTokenInfo = tokenInfo;
+                }
+                
+                // Show token symbol label
+                updateTokenSymbolLabel(type, tokenInfo.symbol);
+                
+                // Clear any error status
+                statusEl.textContent = '';
+                statusEl.className = 'status';
+                
+                // Check if we can fetch quotes now
+                checkReadyForQuote();
+                
+            } catch (error) {
+                console.error('Token fetch error:', error);
+                balanceEl.textContent = 'Balance: Error';
+                // Only show error if we're connected to wallet
+                if (userAddress) {
+                    statusEl.textContent = 'Invalid token address';
+                    statusEl.className = 'status error';
+                }
+                clearTokenSymbolLabel(type);
+            }
+        }
+        
+        // Debounce timer for quote fetching
+        let quoteTimer;
+        
+        function onAmountChange() {
+            const amountInput = document.getElementById('amount');
+            const amount = amountInput.value;
+            const swapButton = document.getElementById('swapButton');
+            const statusEl = document.getElementById('status');
+            
+            // Clear any previous amount-related errors
+            if (statusEl.textContent.includes('Insufficient balance') || 
+                statusEl.textContent.includes('Enter an amount')) {
+                statusEl.textContent = '';
+                statusEl.className = 'status';
+            }
+            
+            checkReadyForQuote();
+            
+            // Validate amount if we have token info
+            if (window.fromTokenInfo && amount) {
+                const amountFloat = parseFloat(amount);
+                if (amountFloat <= 0) {
+                    swapButton.textContent = 'Enter valid amount';
+                    swapButton.disabled = true;
+                    return;
+                }
+                
+                // Check if amount exceeds balance
+                const balance = ethers.utils.formatUnits(
+                    window.fromTokenInfo.balance,
+                    window.fromTokenInfo.decimals
+                );
+                
+                if (amountFloat > parseFloat(balance)) {
+                    // Show warning but still allow quote calculation
+                    swapButton.textContent = 'Insufficient balance';
+                    swapButton.disabled = true;
+                    swapButton.style.backgroundColor = '#ef4444'; // Red
+                    statusEl.textContent = `⚠️ Insufficient balance. You have ${parseFloat(balance).toFixed(6)} ${window.fromTokenInfo.symbol}`;
+                    statusEl.className = 'status warning';
+                    // Don't return - continue to calculate quote
+                } else if (pairExists) {
+                    // Only enable swap if balance is sufficient AND pair exists
+                    swapButton.textContent = 'Ready to Swap';
+                    swapButton.disabled = false;
+                    swapButton.style.backgroundColor = ''; // Reset to default
+                }
+            }
+            
+            // Debounce quote fetching for better performance
+            clearTimeout(quoteTimer);
+            
+            if (window.fromTokenInfo && window.toTokenInfo) {
+                if (amount && parseFloat(amount) > 0) {
+                    // Fetch quote after 300ms of no typing
+                    quoteTimer = setTimeout(() => fetchQuote(), 300);
+                }
+            }
+        }
+        
+        // Fetch quote from Uniswap
+        async function fetchQuote() {
+            const quoteSection = document.getElementById('quoteSection');
+            const expectedOutputEl = document.getElementById('expectedOutput');
+            const minimumReceivedEl = document.getElementById('minimumReceived');
+            const priceImpactEl = document.getElementById('priceImpact');
+            
+            // Show quote section even if monitoring for pair
+            // This allows users to see expected output while waiting
+            
+            try {
+                const amount = document.getElementById('amount').value;
+                const amountIn = ethers.utils.parseUnits(amount, window.fromTokenInfo.decimals);
+                
+                let amountOut;
+                
+                if (selectedRouter === 'v3' && window.v3FeeTier) {
+                    // V3 Quote
+                    const quoter = new ethers.Contract(V3_QUOTER_ADDRESS, V3_QUOTER_ABI, provider);
+                    
+                    // Handle ETH conversion
+                    const tokenIn = window.fromTokenInfo.address.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' 
+                        ? WETH_ADDRESS : window.fromTokenInfo.address;
+                    const tokenOut = window.toTokenInfo.address.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' 
+                        ? WETH_ADDRESS : window.toTokenInfo.address;
+                    
+                    try {
+                        amountOut = await quoter.callStatic.quoteExactInputSingle(
+                            tokenIn,
+                            tokenOut,
+                            window.v3FeeTier,
+                            amountIn,
+                            0 // sqrtPriceLimitX96 = 0 means no limit
+                        );
+                    } catch (error) {
+                        console.error('V3 quote failed, trying V2:', error);
+                        // Fall back to V2
+                        selectedRouter = 'v2';
+                    }
+                }
+                
+                if (selectedRouter === 'v2' || !amountOut) {
+                    // V2 Quote
+                    const path = buildPath(window.fromTokenInfo.address, window.toTokenInfo.address);
+                    const amounts = await routerContract.getAmountsOut(amountIn, path);
+                    amountOut = amounts[amounts.length - 1];
+                }
+                
+                // Format output with dynamic precision based on value
+                const expectedOutput = ethers.utils.formatUnits(amountOut, window.toTokenInfo.decimals);
+                const outputFloat = parseFloat(expectedOutput);
+                
+                // Use more decimals for very small amounts
+                let displayOutput;
+                if (outputFloat === 0) {
+                    displayOutput = '0';
+                } else if (outputFloat < 0.000001) {
+                    displayOutput = outputFloat.toExponential(4);
+                } else if (outputFloat < 0.01) {
+                    displayOutput = outputFloat.toFixed(8);
+                } else if (outputFloat < 1) {
+                    displayOutput = outputFloat.toFixed(6);
+                } else if (outputFloat < 1000) {
+                    displayOutput = outputFloat.toFixed(4);
+                } else {
+                    displayOutput = outputFloat.toLocaleString(undefined, { maximumFractionDigits: 2 });
+                }
+                
+                expectedOutputEl.textContent = `${displayOutput} ${window.toTokenInfo.symbol}`;
+                
+                // Calculate minimum with slippage
+                updateSlippageDisplay(amountOut);
+                
+                // Show quote section
+                quoteSection.classList.remove('hidden');
+                
+                // Calculate actual price impact
+                const priceImpact = await calculatePriceImpact(
+                    window.fromTokenInfo.address,
+                    window.toTokenInfo.address,
+                    amountIn,
+                    amountOut,
+                    path
+                );
+                
+                if (priceImpact !== null) {
+                    // Color code based on impact
+                    let color = '#10b981'; // Green
+                    if (priceImpact > 10) color = '#ef4444'; // Red for high impact
+                    else if (priceImpact > 5) color = '#f59e0b'; // Orange for medium
+                    else if (priceImpact > 3) color = '#fbbf24'; // Yellow for low-medium
+                    
+                    priceImpactEl.innerHTML = `<span style="color: ${color}">${priceImpact.toFixed(2)}%</span>`;
+                } else {
+                    priceImpactEl.textContent = 'Unable to calculate';
+                }
+                
+                // Show slippage tolerance
+                const slippageToleranceEl = document.getElementById('slippageTolerance');
+                const currentSlippage = parseFloat(document.getElementById('slippage').value);
+                slippageToleranceEl.textContent = `${currentSlippage}%`;
+                
+                // Add warning if price impact exceeds slippage tolerance
+                if (priceImpact !== null && priceImpact > currentSlippage) {
+                    slippageToleranceEl.innerHTML = `<span style="color: #ef4444">${currentSlippage}% ⚠️ Impact exceeds tolerance!</span>`;
+                }
+                
+            } catch (error) {
+                console.error('Error fetching quote:', error);
+                
+                // Don't hide quote section, show appropriate message
+                if (!pairExists) {
+                    // Pool doesn't exist yet, show placeholder
+                    expectedOutputEl.textContent = 'Waiting for pool...';
+                    minimumReceivedEl.textContent = 'Waiting for pool...';
+                    priceImpactEl.textContent = 'N/A';
+                    const slippageToleranceEl = document.getElementById('slippageTolerance');
+                    slippageToleranceEl.textContent = `${parseFloat(document.getElementById('slippage').value)}%`;
+                    quoteSection.classList.remove('hidden');
+                } else if (error.message?.includes('INSUFFICIENT')) {
+                    // Insufficient liquidity
+                    expectedOutputEl.textContent = 'Insufficient liquidity';
+                    minimumReceivedEl.textContent = 'Insufficient liquidity';
+                    priceImpactEl.textContent = 'N/A';
+                    quoteSection.classList.remove('hidden');
+                    document.getElementById('status').textContent = 'Insufficient liquidity for this trade';
+                    document.getElementById('status').className = 'status error';
+                } else {
+                    // Other error - hide section
+                    quoteSection.classList.add('hidden');
+                }
+            }
+        }
+        
+        // Build optimal path for swap
+        function buildPath(fromToken, toToken) {
+            const from = fromToken.toLowerCase();
+            const to = toToken.toLowerCase();
+            const weth = WETH_ADDRESS.toLowerCase();
+            
+            // Direct path if one token is WETH or ETH
+            if (from === weth || to === weth || 
+                from === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' ||
+                to === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
+                return [
+                    from === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' ? WETH_ADDRESS : fromToken,
+                    to === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' ? WETH_ADDRESS : toToken
+                ];
+            }
+            
+            // Otherwise route through WETH
+            return [fromToken, WETH_ADDRESS, toToken];
+        }
+        
+        // Calculate actual price impact based on reserves
+        async function calculatePriceImpact(fromToken, toToken, amountIn, amountOut, path) {
+            try {
+                // Calculate price impact by comparing execution price with spot price
+                // This works for both V2 and V3
+                
+                // First, get a quote for a very small amount to find spot price
+                const smallAmount = ethers.utils.parseUnits('0.001', window.fromTokenInfo.decimals);
+                let spotPrice;
+                
+                try {
+                    if (selectedRouter === 'v3' && window.v3FeeTier) {
+                        // V3 spot price
+                        const quoter = new ethers.Contract(V3_QUOTER_ADDRESS, V3_QUOTER_ABI, provider);
+                        const tokenIn = fromToken.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' 
+                            ? WETH_ADDRESS : fromToken;
+                        const tokenOut = toToken.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' 
+                            ? WETH_ADDRESS : toToken;
+                        
+                        const spotQuote = await quoter.callStatic.quoteExactInputSingle(
+                            tokenIn,
+                            tokenOut,
+                            window.v3FeeTier,
+                            smallAmount,
+                            0
+                        );
+                        
+                        // Calculate spot price (output per input)
+                        spotPrice = spotQuote.mul(ethers.BigNumber.from(10).pow(window.fromTokenInfo.decimals))
+                            .div(smallAmount).div(ethers.BigNumber.from(10).pow(window.toTokenInfo.decimals));
+                    } else {
+                        // V2 spot price
+                        const amounts = await routerContract.getAmountsOut(smallAmount, path);
+                        const spotQuote = amounts[amounts.length - 1];
+                        
+                        // Calculate spot price
+                        spotPrice = spotQuote.mul(ethers.BigNumber.from(10).pow(window.fromTokenInfo.decimals))
+                            .div(smallAmount).div(ethers.BigNumber.from(10).pow(window.toTokenInfo.decimals));
+                    }
+                    
+                    // Calculate execution price for actual amount
+                    const executionPrice = amountOut.mul(ethers.BigNumber.from(10).pow(window.fromTokenInfo.decimals))
+                        .div(amountIn).div(ethers.BigNumber.from(10).pow(window.toTokenInfo.decimals));
+                    
+                    // Calculate price impact as percentage
+                    // Impact = (1 - executionPrice/spotPrice) * 100
+                    const impact = spotPrice.sub(executionPrice).mul(10000).div(spotPrice);
+                    return Math.abs(impact.toNumber()) / 100;
+                    
+                } catch (error) {
+                    console.error('Error calculating spot price:', error);
+                    // Fall back to V2 reserve-based calculation if available
+                    if (selectedRouter === 'v2') {
+                        // Continue with original V2 calculation below
+                    } else {
+                        return null;
+                    }
+                }
+                
+                // Original V2 calculation
+                const factory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
+                
+                // For multi-hop, calculate cumulative impact
+                let totalImpact = 0;
+                
+                for (let i = 0; i < path.length - 1; i++) {
+                    const token0 = path[i];
+                    const token1 = path[i + 1];
+                    
+                    // Get pair address
+                    const pairAddress = await factory.getPair(token0, token1);
+                    if (pairAddress === '0x0000000000000000000000000000000000000000') {
+                        return null;
+                    }
+                    
+                    // Get reserves
+                    const pair = new ethers.Contract(pairAddress, PAIR_ABI, provider);
+                    const [reserve0, reserve1] = await pair.getReserves();
+                    const token0Address = await pair.token0();
+                    
+                    // Determine which reserve is which
+                    let reserveIn, reserveOut;
+                    if (token0.toLowerCase() === token0Address.toLowerCase()) {
+                        reserveIn = reserve0;
+                        reserveOut = reserve1;
+                    } else {
+                        reserveIn = reserve1;
+                        reserveOut = reserve0;
+                    }
+                    
+                    // Calculate price before and after trade
+                    const priceBefore = reserveOut.mul(1e18).div(reserveIn);
+                    
+                    // For the first hop, use actual amountIn, for others estimate
+                    const currentAmountIn = i === 0 ? amountIn : amountOut.mul(997).div(1000);
+                    
+                    // Calculate new reserves after trade
+                    const newReserveIn = reserveIn.add(currentAmountIn);
+                    const k = reserveIn.mul(reserveOut);
+                    const newReserveOut = k.div(newReserveIn);
+                    
+                    const priceAfter = newReserveOut.mul(1e18).div(newReserveIn);
+                    
+                    // Calculate impact for this hop
+                    const impact = priceBefore.sub(priceAfter).mul(10000).div(priceBefore);
+                    totalImpact += Math.abs(impact.toNumber()) / 100;
+                }
+                
+                return totalImpact;
+                
+            } catch (error) {
+                console.error('Error calculating price impact:', error);
+                return null;
+            }
+        }
+        
+        // Update slippage display - handles ANY slippage percentage
+        function updateSlippageDisplay(amountOut) {
+            if (!amountOut || !window.toTokenInfo) return;
+            
+            const slippage = parseFloat(document.getElementById('slippage').value) || 0;
+            
+            // Calculate minimum amount based on slippage
+            // For 100% slippage, minimum is 0
+            // For 1000% slippage, minimum is amountOut / 11 (you get 1/11th)
+            // For 10000% slippage, minimum is amountOut / 101 (you get 1/101th)
+            let minAmount;
+            
+            if (slippage >= 100) {
+                // For slippage >= 100%, use different formula
+                // At 100% slippage, divisor = 2 (willing to get half)
+                // At 1000% slippage, divisor = 11 (willing to get 1/11th)
+                // At 10000% slippage, divisor = 101 (willing to get 1/101th)
+                const divisor = 1 + (slippage / 100);
+                minAmount = amountOut.div(Math.floor(divisor));
+                
+                // Ensure minimum of 1 unit
+                if (minAmount.eq(0)) {
+                    minAmount = ethers.BigNumber.from(1);
+                }
+            } else {
+                // For slippage < 100%, use standard calculation
+                const slippageBps = Math.floor(slippage * 100); // Convert to basis points
+                minAmount = amountOut.mul(10000 - slippageBps).div(10000);
+            }
+            
+            const minimumReceived = ethers.utils.formatUnits(minAmount, window.toTokenInfo.decimals);
+            const formatted = parseFloat(minimumReceived) < 0.000001 
+                ? '< 0.000001' 
+                : parseFloat(minimumReceived).toFixed(6);
+                
+            document.getElementById('minimumReceived').textContent = 
+                `${formatted} ${window.toTokenInfo.symbol}`;
+            
+            // Store for swap execution
+            window.minAmountOut = minAmount;
+        }
+        
+        // Set max amount for from token
+        async function setMaxAmount() {
+            if (!window.fromTokenInfo) {
+                return;
+            }
+            
+            const amountInput = document.getElementById('amount');
+            const maxAmount = ethers.utils.formatUnits(
+                window.fromTokenInfo.balance,
+                window.fromTokenInfo.decimals
+            );
+            
+            // Parse the amount to handle precision
+            let finalAmount = parseFloat(maxAmount);
+            
+            // For ETH, leave some for gas (but adjust based on balance)
+            if (window.fromTokenInfo.symbol === 'ETH') {
+                if (finalAmount > 0.1) {
+                    // If balance > 0.1 ETH, leave 0.01 for gas
+                    finalAmount = Math.max(0, finalAmount - 0.01);
+                } else if (finalAmount > 0.01) {
+                    // If balance between 0.01-0.1 ETH, leave 50% for gas
+                    finalAmount = finalAmount * 0.5;
+                } else if (finalAmount > 0.001) {
+                    // If balance between 0.001-0.01 ETH, leave 30% for gas
+                    finalAmount = finalAmount * 0.7;
+                } else {
+                    // Very small balance, leave 20% for gas
+                    finalAmount = finalAmount * 0.8;
+                }
+            }
+            
+            // Format based on amount size to preserve small values
+            let formattedAmount;
+            
+            if (finalAmount === 0) {
+                formattedAmount = '0';
+            } else if (finalAmount < 0.000001) {
+                // For very small amounts, show up to 18 decimals
+                formattedAmount = finalAmount.toFixed(18).replace(/\.?0+$/, '');
+            } else if (finalAmount < 0.001) {
+                // For small amounts, show up to 8 decimals
+                formattedAmount = finalAmount.toFixed(8).replace(/\.?0+$/, '');
+            } else if (finalAmount < 1) {
+                // For amounts less than 1, show up to 6 decimals
+                formattedAmount = finalAmount.toFixed(6).replace(/\.?0+$/, '');
+            } else if (window.fromTokenInfo.decimals >= 18) {
+                // For large amounts with 18 decimals, show up to 6
+                formattedAmount = finalAmount.toFixed(6).replace(/\.?0+$/, '');
+            } else if (window.fromTokenInfo.decimals >= 6) {
+                // For tokens like USDC, show up to 2
+                formattedAmount = finalAmount.toFixed(2).replace(/\.?0+$/, '');
+            } else {
+                // For other tokens
+                formattedAmount = finalAmount.toFixed(window.fromTokenInfo.decimals).replace(/\.?0+$/, '');
+            }
+            
+            // Ensure we don't show scientific notation
+            if (formattedAmount.includes('e')) {
+                formattedAmount = finalAmount.toFixed(18).replace(/\.?0+$/, '');
+            }
+            
+            amountInput.value = formattedAmount;
+            
+            // Show gas reserve note for ETH
+            if (window.fromTokenInfo.symbol === 'ETH' && finalAmount < parseFloat(maxAmount)) {
+                const statusEl = document.getElementById('status');
+                const gasReserved = parseFloat(maxAmount) - finalAmount;
+                let gasMessage;
+                
+                if (gasReserved < 0.001) {
+                    gasMessage = `Reserving ~${(gasReserved * 1000).toFixed(1)} milli-ETH for gas`;
+                } else {
+                    gasMessage = `Reserving ${gasReserved.toFixed(6)} ETH for gas`;
+                }
+                
+                statusEl.textContent = gasMessage;
+                statusEl.className = 'status';
+                
+                // Clear message after 3 seconds
+                setTimeout(() => {
+                    if (statusEl.textContent === gasMessage) {
+                        statusEl.textContent = '';
+                    }
+                }, 3000);
+            }
+            
+            onAmountChange();
+        }
+        
+        // Check if we're ready to fetch quotes
+        function checkReadyForQuote() {
+            const fromToken = document.getElementById('fromToken').value;
+            const toToken = document.getElementById('toToken').value;
+            const amount = document.getElementById('amount').value;
+            const swapButton = document.getElementById('swapButton');
+            const approveButton = document.getElementById('approveButton');
+            
+            // Update approve button
+            if (window.fromTokenInfo && window.fromTokenInfo.symbol !== 'ETH') {
+                approveButton.disabled = false;
+                checkApprovalStatus();
+            } else {
+                approveButton.disabled = true;
+                approveButton.textContent = 'Approve Token';
+            }
+            
+            if (ethers.utils.isAddress(fromToken) && 
+                ethers.utils.isAddress(toToken) && 
+                amount && parseFloat(amount) > 0) {
+                
+                // Start monitoring for pair if not exists
+                if (!pairExists) {
+                    startPairMonitoring();
+                } else {
+                    swapButton.textContent = 'Ready to Swap';
+                    swapButton.disabled = false;
+                    swapButton.style.backgroundColor = ''; // Reset to default color
+                }
+                
+                // Always try to fetch quote when we have valid inputs
+                // This shows expected output even when monitoring
+                if (window.fromTokenInfo && window.toTokenInfo) {
+                    clearTimeout(quoteTimer);
+                    quoteTimer = setTimeout(() => fetchQuote(), 300);
+                }
+            } else if (!ethers.utils.isAddress(fromToken) || !ethers.utils.isAddress(toToken)) {
+                swapButton.textContent = 'Enter valid token addresses';
+                swapButton.disabled = true;
+                stopPairMonitoring();
+            } else {
+                swapButton.textContent = 'Enter amount';
+                swapButton.disabled = true;
+            }
+        }
+        
+        // Start monitoring for pair existence
+        async function startPairMonitoring() {
+            if (!window.fromTokenInfo || !window.toTokenInfo || !provider) return;
+            
+            const pairStatusDiv = document.getElementById('pairStatus');
+            const pairStatusText = document.getElementById('pairStatusText');
+            const swapButton = document.getElementById('swapButton');
+            
+            // Show monitoring status
+            pairStatusDiv.classList.remove('hidden');
+            pairStatusDiv.classList.add('monitoring');
+            pairStatusDiv.classList.remove('live');
+            
+            // Clear any existing interval
+            stopPairMonitoring();
+            
+            // Check immediately
+            await checkPairExists();
+            
+            // Then check every 250ms
+            pairMonitorInterval = setInterval(async () => {
+                await checkPairExists();
+            }, 250);
+        }
+        
+        // Stop monitoring
+        function stopPairMonitoring() {
+            if (pairMonitorInterval) {
+                clearInterval(pairMonitorInterval);
+                pairMonitorInterval = null;
+            }
+            document.getElementById('pairStatus').classList.add('hidden');
+        }
+        
+        // Check if pair exists (V2 and V3)
+        async function checkPairExists() {
+            try {
+                const v2Factory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
+                const v3Factory = new ethers.Contract(V3_FACTORY_ADDRESS, V3_FACTORY_ABI, provider);
+                const token0 = window.fromTokenInfo.address;
+                const token1 = window.toTokenInfo.address;
+                
+                // Handle ETH/WETH conversion
+                const actualToken0 = token0.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' 
+                    ? WETH_ADDRESS : token0;
+                const actualToken1 = token1.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' 
+                    ? WETH_ADDRESS : token1;
+                
+                // Check V3 pools first (usually better liquidity)
+                let foundPool = false;
+                let bestPool = null;
+                let bestVersion = null;
+                
+                // Check all V3 fee tiers
+                for (const fee of V3_FEE_TIERS) {
+                    const v3Pool = await v3Factory.getPool(actualToken0, actualToken1, fee);
+                    if (v3Pool !== '0x0000000000000000000000000000000000000000') {
+                        foundPool = true;
+                        bestPool = v3Pool;
+                        bestVersion = 'v3';
+                        window.v3FeeTier = fee;
+                        console.log(`Found V3 pool with ${fee/10000}% fee`);
+                        break; // Use first found V3 pool
+                    }
+                }
+                
+                // Check V2 if no V3 pool found
+                if (!foundPool) {
+                    const v2Pair = await v2Factory.getPair(actualToken0, actualToken1);
+                    if (v2Pair !== '0x0000000000000000000000000000000000000000') {
+                        foundPool = true;
+                        bestPool = v2Pair;
+                        bestVersion = 'v2';
+                        console.log('Found V2 pool');
+                    }
+                }
+                
+                const pairStatusDiv = document.getElementById('pairStatus');
+                const pairStatusText = document.getElementById('pairStatusText');
+                const swapButton = document.getElementById('swapButton');
+                
+                if (foundPool) {
+                    selectedRouter = bestVersion;
+                    // Pair exists!
+                    pairExists = true;
+                    pairStatusDiv.classList.remove('monitoring');
+                    pairStatusDiv.classList.add('live');
+                    
+                    // Check if auto-swap is enabled
+                    const autoSwapEnabled = document.getElementById('autoSwap').checked;
+                    
+                    if (autoSwapEnabled) {
+                        const versionText = bestVersion === 'v3' ? `V3 (${window.v3FeeTier/10000}% fee)` : 'V2';
+                        pairStatusText.textContent = `🚀 ${versionText} PAIR FOUND! AUTO-SWAPPING...`;
+                        swapButton.textContent = 'AUTO-SWAPPING...';
+                        swapButton.disabled = true;
+                        swapButton.style.backgroundColor = '#ef4444';
+                        
+                        // Stop monitoring
+                        stopPairMonitoring();
+                        
+                        // Execute swap automatically after fetching quote
+                        setTimeout(async () => {
+                            await fetchQuote();
+                            // Small delay to ensure quote is displayed
+                            setTimeout(() => executeSwap(), 100);
+                        }, 100);
+                    } else {
+                        const versionText = bestVersion === 'v3' ? `V3 (${window.v3FeeTier/10000}% fee)` : 'V2';
+                        pairStatusText.textContent = `🚀 ${versionText} PAIR IS LIVE! READY TO SWAP!`;
+                        swapButton.textContent = 'SWAP NOW! (Press Enter)';
+                        swapButton.disabled = false;
+                        swapButton.style.backgroundColor = '#10b981';
+                        
+                        // Try to fetch quote
+                        fetchQuote();
+                        
+                        // Stop monitoring
+                        stopPairMonitoring();
+                    }
+                    
+                    console.log(`${bestVersion.toUpperCase()} PAIR FOUND!`, bestPool);
+                } else {
+                    // No pair yet
+                    pairExists = false;
+                    pairStatusText.textContent = 'Pair not live yet - Monitoring...';
+                    swapButton.textContent = 'Waiting for pair...';
+                    swapButton.disabled = true;
+                }
+            } catch (error) {
+                console.error('Error checking pair:', error);
+            }
+        }
+        
+        function onSlippageChange() {
+            const slippage = document.getElementById('slippage').value;
+            console.log('Slippage changed to:', slippage + '%');
+            
+            // Update minimum received if we have a quote
+            if (window.fromTokenInfo && window.toTokenInfo) {
+                const amount = document.getElementById('amount').value;
+                if (amount && parseFloat(amount) > 0) {
+                    fetchQuote();
+                }
+            }
+        }
+        
+        // Handle auto-swap toggle
+        function onAutoSwapChange() {
+            const autoSwap = document.getElementById('autoSwap');
+            const statusEl = document.getElementById('status');
+            
+            if (autoSwap.checked) {
+                // Show warning
+                const confirmed = confirm(
+                    '⚠️ WARNING: Auto-Swap Mode\n\n' +
+                    'This will AUTOMATICALLY execute the swap the moment a liquidity pair is detected!\n\n' +
+                    '• Make sure your amounts are correct\n' +
+                    '• Make sure your slippage is set\n' +
+                    '• Make sure tokens are pre-approved\n' +
+                    '• This could result in immediate loss if settings are wrong\n\n' +
+                    'Are you SURE you want to enable auto-swap?'
+                );
+                
+                if (!confirmed) {
+                    autoSwap.checked = false;
+                    return;
+                }
+                
+                statusEl.textContent = '⚡ Auto-swap mode ACTIVE - will execute instantly when pair is found!';
+                statusEl.className = 'status error';
+                
+                // Pre-approve token if needed
+                if (window.fromTokenInfo && window.fromTokenInfo.symbol !== 'ETH') {
+                    checkApprovalStatus();
+                    const approveButton = document.getElementById('approveButton');
+                    if (approveButton.textContent !== '✓ Approved') {
+                        statusEl.textContent = '⚠️ Pre-approve your token before enabling auto-swap!';
+                    }
+                }
+            } else {
+                statusEl.textContent = 'Auto-swap disabled';
+                statusEl.className = 'status';
+            }
+        }
+        
+        // Check token approval
+        async function checkAndApprove() {
+            if (!window.fromTokenInfo || window.fromTokenInfo.symbol === 'ETH') {
+                // ETH doesn't need approval
+                return true;
+            }
+            
+            const statusEl = document.getElementById('status');
+            const swapButton = document.getElementById('swapButton');
+            
+            try {
+                const tokenContract = new ethers.Contract(
+                    window.fromTokenInfo.address,
+                    ERC20_ABI,
+                    signer
+                );
+                
+                // Check current allowance for the selected router
+                const routerAddress = selectedRouter === 'v3' ? UNISWAP_V3_ROUTER : UNISWAP_V2_ROUTER;
+                const allowance = await tokenContract.allowance(userAddress, routerAddress);
+                const amount = document.getElementById('amount').value;
+                const amountIn = ethers.utils.parseUnits(amount, window.fromTokenInfo.decimals);
+                
+                if (allowance.lt(amountIn)) {
+                    // Need approval
+                    swapButton.disabled = true;
+                    swapButton.textContent = 'Approving...';
+                    statusEl.textContent = `Approving token for Uniswap ${selectedRouter.toUpperCase()}...`;
+                    statusEl.className = 'status';
+                    
+                    // Approve max amount for future trades
+                    const maxApproval = ethers.constants.MaxUint256;
+                    const tx = await tokenContract.approve(routerAddress, maxApproval);
+                    
+                    statusEl.textContent = 'Waiting for approval confirmation...';
+                    await tx.wait();
+                    
+                    statusEl.textContent = 'Token approved!';
+                    statusEl.className = 'status success';
+                    swapButton.textContent = 'Swap';
+                    swapButton.disabled = false;
+                    
+                    return true;
+                }
+                
+                return true; // Already approved
+                
+            } catch (error) {
+                console.error('Approval error:', error);
+                statusEl.textContent = 'Approval failed';
+                statusEl.className = 'status error';
+                swapButton.disabled = false;
+                swapButton.textContent = 'Retry Swap';
+                return false;
+            }
+        }
+        
+        async function executeSwap() {
+            const statusEl = document.getElementById('status');
+            const swapButton = document.getElementById('swapButton');
+            const amount = document.getElementById('amount').value;
+            
+            try {
+                // Validate amount first
+                if (!amount || parseFloat(amount) <= 0) {
+                    statusEl.textContent = 'Please enter an amount to swap';
+                    statusEl.className = 'status error';
+                    return;
+                }
+                
+                // Save pair for future use
+                saveCurrentPair();
+                
+                // Validate inputs
+                if (!window.fromTokenInfo || !window.toTokenInfo || !window.minAmountOut) {
+                    statusEl.textContent = 'Please enter valid tokens and amount';
+                    statusEl.className = 'status error';
+                    return;
+                }
+                
+                const amountIn = ethers.utils.parseUnits(amount, window.fromTokenInfo.decimals);
+                
+                // Double-check balance
+                if (amountIn.gt(window.fromTokenInfo.balance)) {
+                    statusEl.textContent = 'Insufficient balance for this swap';
+                    statusEl.className = 'status error';
+                    return;
+                }
+                
+                // Check approval first (for tokens only)
+                const approved = await checkAndApprove();
+                if (!approved) return;
+                
+                // Disable button and show status
+                swapButton.disabled = true;
+                swapButton.textContent = 'Swapping...';
+                const versionText = selectedRouter === 'v3' ? `V3 (${window.v3FeeTier/10000}% fee)` : 'V2';
+                statusEl.textContent = `Executing ${versionText} swap...`;
+                statusEl.className = 'status';
+                
+                // Build path
+                const path = buildPath(window.fromTokenInfo.address, window.toTokenInfo.address);
+                
+                // Set deadline (20 minutes from now)
+                const deadline = Math.floor(Date.now() / 1000) + 1200;
+                
+                let tx;
+                const isFromETH = window.fromTokenInfo.address.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+                const isToETH = window.toTokenInfo.address.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+                
+                // Execute appropriate swap method
+                if (selectedRouter === 'v3' && window.v3FeeTier) {
+                    // V3 Swap
+                    const v3Router = new ethers.Contract(
+                        UNISWAP_V3_ROUTER,
+                        V3_SWAP_ROUTER_ABI,
+                        signer
+                    );
+                    
+                    // Convert ETH to WETH for V3
+                    const tokenIn = isFromETH ? WETH_ADDRESS : window.fromTokenInfo.address;
+                    const tokenOut = isToETH ? WETH_ADDRESS : window.toTokenInfo.address;
+                    
+                    const params = {
+                        tokenIn: tokenIn,
+                        tokenOut: tokenOut,
+                        fee: window.v3FeeTier,
+                        recipient: userAddress,
+                        deadline: deadline,
+                        amountIn: amountIn,
+                        amountOutMinimum: window.minAmountOut,
+                        sqrtPriceLimitX96: 0 // No price limit
+                    };
+                    
+                    if (isFromETH) {
+                        // ETH swap - send ETH value
+                        tx = await v3Router.exactInputSingle(params, { value: amountIn });
+                    } else {
+                        // Token swap
+                        tx = await v3Router.exactInputSingle(params);
+                    }
+                    
+                    // If output is ETH, need to unwrap WETH
+                    if (isToETH && tx.hash) {
+                        statusEl.textContent = 'Swap sent! Unwrapping WETH...';
+                        // V3 automatically unwraps WETH when recipient is the sender
+                    }
+                    
+                    console.log('V3 swap executed with fee tier:', window.v3FeeTier);
+                } else if (isFromETH) {
+                    // V2: Swap ETH for tokens
+                    tx = await routerContract.swapExactETHForTokens(
+                        window.minAmountOut,
+                        path,
+                        userAddress,
+                        deadline,
+                        { value: amountIn }
+                    );
+                } else if (isToETH) {
+                    // Swap tokens for ETH
+                    tx = await routerContract.swapExactTokensForETH(
+                        amountIn,
+                        window.minAmountOut,
+                        path,
+                        userAddress,
+                        deadline
+                    );
+                } else {
+                    // Swap tokens for tokens
+                    tx = await routerContract.swapExactTokensForTokens(
+                        amountIn,
+                        window.minAmountOut,
+                        path,
+                        userAddress,
+                        deadline
+                    );
+                }
+                
+                statusEl.textContent = `Transaction sent! Hash: ${tx.hash.slice(0, 10)}...`;
+                
+                // Wait for confirmation
+                const receipt = await tx.wait();
+                
+                if (receipt.status === 1) {
+                    const versionText = selectedRouter === 'v3' ? `V3` : 'V2';
+                    statusEl.textContent = `${versionText} swap successful! Gas used: ${receipt.gasUsed.toString()}`;
+                    statusEl.className = 'status success';
+                    
+                    // Refresh balances after swap
+                    setTimeout(() => {
+                        onTokenChange('from');
+                        onTokenChange('to');
+                    }, 1000);
+                } else {
+                    statusEl.textContent = 'Swap failed!';
+                    statusEl.className = 'status error';
+                }
+                
+            } catch (error) {
+                console.error('Swap error:', error);
+                
+                // Parse error message
+                let errorMsg = 'Swap failed';
+                if (error.message?.includes('insufficient funds')) {
+                    errorMsg = 'Insufficient balance for gas';
+                } else if (error.message?.includes('INSUFFICIENT_OUTPUT_AMOUNT')) {
+                    errorMsg = 'Slippage too low - increase slippage tolerance';
+                } else if (error.message?.includes('user rejected')) {
+                    errorMsg = 'Transaction cancelled';
+                } else if (error.reason) {
+                    errorMsg = error.reason;
+                }
+                
+                statusEl.textContent = errorMsg;
+                statusEl.className = 'status error';
+            } finally {
+                swapButton.disabled = false;
+                swapButton.textContent = 'Swap';
+            }
+        }
+    </script>
+</body>
+</html>
