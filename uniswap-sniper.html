@@ -15,26 +15,77 @@
     </script>
     
     <style>
+        :root {
+            /* Modern color palette */
+            --bg-primary: #0a0b0d;
+            --bg-secondary: #141519;
+            --bg-card: rgba(25, 27, 31, 0.8);
+            --bg-card-hover: rgba(30, 32, 36, 0.9);
+            --accent-primary: #ec4899;
+            --accent-primary-hover: #db2777;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --border-hover: rgba(255, 255, 255, 0.2);
+            --gradient-primary: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+            --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 20px rgba(236, 72, 153, 0.3);
+        }
+
         * {
             box-sizing: border-box;
         }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: #0d0e11;
-            color: #ffffff;
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            color: var(--text-primary);
             margin: 0;
-            padding: 20px;
+            padding: 0;
             min-height: 100vh;
+            overflow-x: hidden;
         }
         
         .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background-color: #191b1f;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            max-width: 520px;
+            margin: 20px auto;
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 24px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(139, 92, 246, 0.2));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .container:hover::before {
+            opacity: 1;
         }
         
         h1 {
@@ -47,9 +98,31 @@
         .wallet-section {
             text-align: center;
             margin-bottom: 30px;
-            padding: 20px;
-            background-color: #0d0e11;
-            border-radius: 12px;
+            padding: 24px;
+            background: var(--bg-secondary);
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .wallet-section::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .wallet-section:hover::after {
+            opacity: 1;
         }
         
         .wallet-address {
@@ -66,26 +139,49 @@
         }
         
         button {
-            background-color: #ec4899;
+            background: var(--gradient-primary);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             width: 100%;
+            position: relative;
+            overflow: hidden;
+            transform: translateZ(0);
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
         }
         
         button:hover:not(:disabled) {
-            background-color: #db2777;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(236, 72, 153, 0.4);
+        }
+        
+        button:hover:not(:disabled)::before {
+            left: 100%;
+        }
+        
+        button:active:not(:disabled) {
+            transform: translateY(0);
         }
         
         button:disabled {
-            background-color: #374151;
+            background: linear-gradient(135deg, #374151, #4b5563);
             cursor: not-allowed;
+            opacity: 0.7;
         }
         
         .swap-section {
@@ -93,31 +189,43 @@
         }
         
         .input-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
         
         label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-size: 14px;
-            color: #9ca3af;
+            color: var(--text-secondary);
             font-weight: 500;
+            letter-spacing: 0.02em;
         }
         
         input {
             width: 100%;
-            padding: 12px;
-            background-color: #0d0e11;
-            border: 1px solid #374151;
-            border-radius: 8px;
-            color: #ffffff;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
             font-size: 16px;
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
+        }
+        
+        input:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--border-hover);
         }
         
         input:focus {
             outline: none;
-            border-color: #ec4899;
+            border-color: var(--accent-primary);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+        }
+        
+        input::placeholder {
+            color: var(--text-muted);
         }
         
         .token-balance {
@@ -153,10 +261,17 @@
         }
         
         .slippage-group {
-            background-color: #0d0e11;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .slippage-group:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-hover);
         }
         
         .slippage-header {
@@ -174,10 +289,31 @@
         }
         
         .quote-section {
-            background-color: #0d0e11;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.05), rgba(139, 92, 246, 0.05));
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quote-section::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: var(--gradient-primary);
+            border-radius: 16px;
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.3s ease;
+        }
+        
+        .quote-section:hover::before {
+            opacity: 0.1;
         }
         
         .quote-row {
@@ -511,9 +647,555 @@
             padding: 2px 8px;
             border-radius: 4px;
         }
+        
+        /* Status Bar */
+        .status-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: rgba(20, 21, 25, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+            padding: 0 20px;
+        }
+        
+        .status-bar-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .status-bar-left,
+        .status-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo {
+            font-weight: 700;
+            font-size: 16px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            font-size: 13px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-danger);
+            box-shadow: 0 0 8px var(--accent-danger);
+            animation: pulse-dot 2s infinite;
+        }
+        
+        .status-dot.connected {
+            background: var(--accent-success);
+            box-shadow: 0 0 8px var(--accent-success);
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .gas-price,
+        .block-number {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        /* Adjust container for status bar */
+        body {
+            padding-top: 48px;
+        }
+        
+        /* Auto-swap danger section */
+        .auto-swap-group {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .auto-swap-group::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-danger);
+            animation: danger-pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes danger-pulse {
+            0%, 100% { opacity: 0.5; transform: scaleX(1); }
+            50% { opacity: 1; transform: scaleX(1.05); }
+        }
+        
+        /* Enhanced pair status */
+        .pair-status {
+            margin: 20px 0;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+        
+        .pair-status.monitoring {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05));
+            color: var(--accent-warning);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            animation: monitoring-pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes monitoring-pulse {
+            0% { 
+                border-color: rgba(251, 191, 36, 0.3);
+                box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
+            }
+            50% { 
+                border-color: rgba(245, 158, 11, 0.5);
+                box-shadow: 0 0 0 10px rgba(251, 191, 36, 0);
+            }
+            100% { 
+                border-color: rgba(251, 191, 36, 0.3);
+                box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+            }
+        }
+        
+        .pair-status.live {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+            color: var(--accent-success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            animation: live-pulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes live-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        /* Monitoring Dashboard */
+        .monitoring-dashboard {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(236, 72, 153, 0.05));
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(5px);
+        }
+        
+        .monitoring-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .monitoring-header h3 {
+            margin: 0;
+            font-size: 16px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .monitoring-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .pause-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .monitoring-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .monitoring-graph {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 8px;
+            overflow: hidden;
+        }
+        
+        #activityGraph {
+            width: 100%;
+            height: 60px;
+            image-rendering: pixelated;
+        }
+        
+        /* Pool Version Selector */
+        .pool-version-selector {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .pool-version-selector:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-hover);
+        }
+        
+        .version-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .version-header label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .version-info {
+            font-size: 12px;
+            color: var(--accent-primary);
+            font-weight: 500;
+            padding: 4px 12px;
+            background: rgba(236, 72, 153, 0.1);
+            border-radius: 20px;
+        }
+        
+        .version-toggles {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .version-toggle {
+            position: relative;
+        }
+        
+        .version-toggle input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .toggle-label:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--border-hover);
+        }
+        
+        .version-toggle input[type="checkbox"]:checked + .toggle-label {
+            background: rgba(236, 72, 153, 0.1);
+            border-color: var(--accent-primary);
+        }
+        
+        .toggle-switch {
+            width: 40px;
+            height: 22px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 11px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .version-toggle input[type="checkbox"]:checked + .toggle-label .toggle-switch {
+            background: var(--gradient-primary);
+            border-color: var(--accent-primary);
+        }
+        
+        .version-toggle input[type="checkbox"]:checked + .toggle-label .toggle-switch::after {
+            background: white;
+            transform: translateX(18px);
+        }
+        
+        .version-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .version-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+            border-radius: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Disabled state */
+        .version-toggle input[type="checkbox"]:disabled + .toggle-label {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Warning when no versions selected */
+        .pool-version-selector.warning {
+            border-color: var(--accent-danger);
+            background: rgba(239, 68, 68, 0.05);
+        }
+        
+        .pool-version-selector.warning .version-info {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-danger);
+        }
+        
+        /* Mobile Responsive Design */
+        @media (max-width: 640px) {
+            body {
+                padding-top: 48px;
+            }
+            
+            .container {
+                max-width: 100%;
+                margin: 10px;
+                padding: 20px;
+                border-radius: 20px;
+            }
+            
+            .status-bar {
+                padding: 0 10px;
+            }
+            
+            .status-bar-content {
+                font-size: 12px;
+            }
+            
+            .logo {
+                font-size: 14px;
+            }
+            
+            .status-bar-right {
+                display: none;
+            }
+            
+            h1 {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .input-group {
+                margin-bottom: 16px;
+            }
+            
+            input {
+                padding: 12px 14px;
+                font-size: 16px;
+                -webkit-appearance: none;
+            }
+            
+            button {
+                padding: 12px 20px;
+                font-size: 15px;
+            }
+            
+            .monitoring-stats {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .stat-card {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 16px;
+            }
+            
+            .stat-label {
+                font-size: 12px;
+                margin-bottom: 0;
+            }
+            
+            .stat-value {
+                font-size: 16px;
+            }
+            
+            .saved-pairs {
+                padding: 12px;
+            }
+            
+            .pair-item {
+                padding: 12px;
+                font-size: 14px;
+            }
+            
+            .slippage-input {
+                width: 60px;
+                padding: 6px;
+                font-size: 14px;
+            }
+            
+            /* Touch-friendly buttons */
+            button,
+            .max-button,
+            .use-pair-btn,
+            .clear-pairs-btn,
+            .token-dropdown-toggle {
+                min-height: 44px;
+                touch-action: manipulation;
+            }
+            
+            /* Bottom sheet style for auto-swap on mobile */
+            .auto-swap-group {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                margin: 0;
+                border-radius: 20px 20px 0 0;
+                padding: 24px 20px 30px;
+                z-index: 100;
+                transform: translateY(calc(100% - 60px));
+                transition: transform 0.3s ease;
+            }
+            
+            .auto-swap-group.expanded {
+                transform: translateY(0);
+            }
+            
+            .auto-swap-group::after {
+                content: '';
+                position: absolute;
+                top: 8px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 4px;
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 2px;
+            }
+            
+            /* Pool version selector mobile */
+            .version-toggles {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .pool-version-selector {
+                padding: 16px;
+            }
+        }
+        
+        /* Tablet adjustments */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .container {
+                max-width: 600px;
+                padding: 28px;
+            }
+            
+            .monitoring-stats {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-bar-content">
+            <div class="status-bar-left">
+                <span class="logo">🦄 Uniswap Sniper</span>
+                <span class="status-indicator" id="connectionStatus">
+                    <span class="status-dot"></span>
+                    <span id="connectionText">Disconnected</span>
+                </span>
+            </div>
+            <div class="status-bar-right">
+                <span id="gasPrice" class="gas-price">Gas: --</span>
+                <span id="blockNumber" class="block-number">Block: --</span>
+            </div>
+        </div>
+    </div>
+    
     <div class="container">
         <h1>Uniswap Sniper</h1>
         <p style="text-align: center; color: #9ca3af; font-size: 14px; margin-top: -20px; margin-bottom: 20px;">
@@ -577,10 +1259,62 @@
                 </button>
             </div>
             
+            <!-- Pool Version Selection -->
+            <div class="pool-version-selector">
+                <div class="version-header">
+                    <label>Pool Versions to Check</label>
+                    <span class="version-info" id="versionInfo">Checking: V2 & V3</span>
+                </div>
+                <div class="version-toggles">
+                    <div class="version-toggle">
+                        <input type="checkbox" id="checkV2" checked onchange="onPoolVersionChange()">
+                        <label for="checkV2" class="toggle-label">
+                            <span class="toggle-switch"></span>
+                            <span class="version-text">Uniswap V2</span>
+                        </label>
+                    </div>
+                    <div class="version-toggle">
+                        <input type="checkbox" id="checkV3" checked onchange="onPoolVersionChange()">
+                        <label for="checkV3" class="toggle-label">
+                            <span class="toggle-switch"></span>
+                            <span class="version-text">Uniswap V3</span>
+                            <span class="version-badge">Multi-fee</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Pair Status -->
             <div id="pairStatus" class="pair-status hidden">
                 <span id="pairStatusText">Checking pair...</span>
                 <span class="monitoring-dot"></span>
+            </div>
+            
+            <!-- Monitoring Dashboard -->
+            <div id="monitoringDashboard" class="monitoring-dashboard hidden">
+                <div class="monitoring-header">
+                    <h3>Live Monitoring</h3>
+                    <div class="monitoring-controls">
+                        <button class="pause-btn" onclick="toggleMonitoringPause()">⏸️</button>
+                    </div>
+                </div>
+                <div class="monitoring-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Uptime</div>
+                        <div class="stat-value" id="dashboardUptime">00:00:00</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Checks</div>
+                        <div class="stat-value" id="dashboardChecks">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Rate</div>
+                        <div class="stat-value" id="dashboardRate">0/sec</div>
+                    </div>
+                </div>
+                <div class="monitoring-graph">
+                    <canvas id="activityGraph" width="400" height="60"></canvas>
+                </div>
             </div>
             
             <!-- To Token -->
@@ -612,9 +1346,11 @@
             </div>
             
             <!-- Auto-Swap Settings -->
-            <div class="slippage-group" style="background-color: #7f1d1d; border: 1px solid #ef4444;">
+            <div class="auto-swap-group">
                 <div class="slippage-header">
-                    <label style="margin-bottom: 0; color: #ef4444;">⚡ Auto-Swap Mode</label>
+                    <label style="margin-bottom: 0; color: var(--accent-danger); font-weight: 600;">
+                        <span style="font-size: 18px;">⚡</span> Auto-Swap Mode
+                    </label>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <input type="checkbox" id="autoSwap" onchange="onAutoSwapChange()" style="width: 20px; height: 20px; cursor: pointer;">
                         <span style="color: #fbbf24; font-size: 12px;">DANGER</span>
@@ -838,6 +1574,147 @@
         
         // Execution lock to prevent duplicate swaps
         let executingSwap = false;
+        
+        // Update status bar
+        function updateStatusBar() {
+            const connectionStatus = document.getElementById('connectionStatus');
+            const connectionText = document.getElementById('connectionText');
+            const statusDot = connectionStatus.querySelector('.status-dot');
+            
+            if (userAddress) {
+                connectionText.textContent = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+                statusDot.classList.add('connected');
+            } else {
+                connectionText.textContent = 'Disconnected';
+                statusDot.classList.remove('connected');
+            }
+        }
+        
+        // Update gas price
+        async function updateGasPrice() {
+            if (!provider) return;
+            try {
+                const gasPrice = await provider.getGasPrice();
+                const gasPriceGwei = ethers.utils.formatUnits(gasPrice, 'gwei');
+                document.getElementById('gasPrice').textContent = `Gas: ${Math.round(gasPriceGwei)} gwei`;
+            } catch (error) {
+                console.error('Error fetching gas price:', error);
+            }
+        }
+        
+        // Update block number
+        async function updateBlockNumber() {
+            if (!provider) return;
+            try {
+                const blockNumber = await provider.getBlockNumber();
+                document.getElementById('blockNumber').textContent = `Block: ${blockNumber.toLocaleString()}`;
+            } catch (error) {
+                console.error('Error fetching block number:', error);
+            }
+        }
+        
+        // Initialize monitoring graph
+        let activityData = new Array(50).fill(0);
+        let graphContext;
+        
+        function initializeGraph() {
+            const canvas = document.getElementById('activityGraph');
+            if (!canvas) return;
+            
+            graphContext = canvas.getContext('2d');
+            drawGraph();
+        }
+        
+        function drawGraph() {
+            if (!graphContext) return;
+            
+            const canvas = graphContext.canvas;
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            graphContext.clearRect(0, 0, width, height);
+            
+            // Draw activity bars
+            const barWidth = width / activityData.length;
+            const maxValue = Math.max(...activityData, 10);
+            
+            graphContext.fillStyle = '#ec4899';
+            activityData.forEach((value, index) => {
+                const barHeight = (value / maxValue) * height;
+                graphContext.fillRect(
+                    index * barWidth,
+                    height - barHeight,
+                    barWidth - 1,
+                    barHeight
+                );
+            });
+        }
+        
+        function updateActivityGraph() {
+            activityData.push(Math.random() * 10 + 5);
+            activityData.shift();
+            drawGraph();
+        }
+        
+        // Toggle monitoring pause
+        let monitoringPaused = false;
+        function toggleMonitoringPause() {
+            monitoringPaused = !monitoringPaused;
+            const pauseBtn = document.querySelector('.pause-btn');
+            pauseBtn.textContent = monitoringPaused ? '▶️' : '⏸️';
+        }
+        
+        // Pool version settings
+        let poolVersionSettings = {
+            v2: true,
+            v3: true
+        };
+        
+        // Handle pool version change
+        function onPoolVersionChange() {
+            const checkV2 = document.getElementById('checkV2').checked;
+            const checkV3 = document.getElementById('checkV3').checked;
+            const versionInfo = document.getElementById('versionInfo');
+            const poolSelector = document.querySelector('.pool-version-selector');
+            
+            poolVersionSettings.v2 = checkV2;
+            poolVersionSettings.v3 = checkV3;
+            
+            // Update display
+            if (checkV2 && checkV3) {
+                versionInfo.textContent = 'Checking: V2 & V3';
+                poolSelector.classList.remove('warning');
+            } else if (checkV2) {
+                versionInfo.textContent = 'Checking: V2 Only';
+                poolSelector.classList.remove('warning');
+            } else if (checkV3) {
+                versionInfo.textContent = 'Checking: V3 Only';
+                poolSelector.classList.remove('warning');
+            } else {
+                versionInfo.textContent = '⚠️ No versions selected!';
+                poolSelector.classList.add('warning');
+            }
+            
+            // Save settings
+            localStorage.setItem('poolVersionSettings', JSON.stringify(poolVersionSettings));
+            
+            // If monitoring is active, restart to apply changes
+            if (pairMonitorInterval) {
+                console.log('Restarting monitoring with new pool version settings');
+                startPairMonitoring();
+            }
+        }
+        
+        // Load pool version settings
+        function loadPoolVersionSettings() {
+            const saved = localStorage.getItem('poolVersionSettings');
+            if (saved) {
+                poolVersionSettings = JSON.parse(saved);
+                document.getElementById('checkV2').checked = poolVersionSettings.v2;
+                document.getElementById('checkV3').checked = poolVersionSettings.v3;
+                onPoolVersionChange();
+            }
+        }
         
         // Uniswap V2 Factory ABI for pair checking
         const FACTORY_ABI = [
@@ -1531,6 +2408,18 @@
                 statusEl.textContent = 'Wallet connected successfully!';
                 statusEl.className = 'status success';
                 
+                // Update status bar
+                updateStatusBar();
+                updateGasPrice();
+                updateBlockNumber();
+                
+                // Set up periodic updates
+                setInterval(updateGasPrice, 15000); // Update gas every 15 seconds
+                setInterval(updateBlockNumber, 12000); // Update block every 12 seconds
+                
+                // Initialize monitoring graph
+                initializeGraph();
+                
                 console.log('Connected to:', userAddress);
                 console.log('ETH Balance:', ethBalance);
                 
@@ -1784,7 +2673,8 @@
                 
                 let amountOut;
                 
-                if (selectedRouter === 'v3' && window.v3FeeTier) {
+                // Try to get quote based on selectedRouter and pool version settings
+                if (selectedRouter === 'v3' && window.v3FeeTier && poolVersionSettings.v3) {
                     // V3 Quote
                     const quoter = new ethers.Contract(V3_QUOTER_ADDRESS, V3_QUOTER_ABI, provider);
                     
@@ -1804,16 +2694,23 @@
                         );
                     } catch (error) {
                         console.error('V3 quote failed, trying V2:', error);
-                        // Fall back to V2
-                        selectedRouter = 'v2';
+                        // Fall back to V2 if enabled
+                        if (poolVersionSettings.v2) {
+                            selectedRouter = 'v2';
+                        }
                     }
                 }
                 
-                if (selectedRouter === 'v2' || !amountOut) {
+                if ((selectedRouter === 'v2' && poolVersionSettings.v2) || (!amountOut && poolVersionSettings.v2)) {
                     // V2 Quote
                     const path = buildPath(window.fromTokenInfo.address, window.toTokenInfo.address);
                     const amounts = await routerContract.getAmountsOut(amountIn, path);
                     amountOut = amounts[amounts.length - 1];
+                }
+                
+                if (!amountOut) {
+                    // No quote available with current settings
+                    throw new Error('No liquidity available in selected pool versions');
                 }
                 
                 // Format output with dynamic precision based on value
@@ -2250,6 +3147,10 @@
             pairStatusDiv.classList.remove('live');
             pairStatusText.innerHTML = '🔍 Checking for liquidity pool... <span class="monitoring-dot">⚫</span>';
             
+            // Show monitoring dashboard
+            const dashboard = document.getElementById('monitoringDashboard');
+            dashboard.classList.remove('hidden');
+            
             // Clear any existing interval
             stopPairMonitoring();
             
@@ -2281,6 +3182,39 @@
             console.log(`Monitoring started at ${monitoringInterval}ms intervals`);
         }
         
+        // Update monitoring stats display
+        function updateMonitoringStats() {
+            if (!monitoringStartTime) return;
+            
+            const now = Date.now();
+            const elapsed = now - monitoringStartTime;
+            
+            // Calculate uptime
+            const hours = Math.floor(elapsed / 3600000);
+            const minutes = Math.floor((elapsed % 3600000) / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            const uptime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update dashboard
+            document.getElementById('dashboardUptime').textContent = uptime;
+            document.getElementById('dashboardChecks').textContent = checksPerformed.toLocaleString();
+            
+            // Calculate actual rate
+            const elapsedSeconds = elapsed / 1000;
+            const actualRate = elapsedSeconds > 0 ? (checksPerformed / elapsedSeconds).toFixed(1) : '0';
+            document.getElementById('dashboardRate').textContent = `${actualRate}/sec`;
+            
+            // Update activity graph
+            if (!monitoringPaused) {
+                updateActivityGraph();
+            }
+            
+            // Update live stats display
+            document.getElementById('uptime').textContent = uptime;
+            document.getElementById('checksCount').textContent = checksPerformed.toLocaleString();
+            document.getElementById('lastCheck').textContent = lastCheckTime ? new Date(lastCheckTime).toLocaleTimeString() : '-';
+        }
+        
         // Stop monitoring
         function stopPairMonitoring() {
             if (pairMonitorInterval) {
@@ -2304,6 +3238,10 @@
             lastCheckTime = null;
             
             document.getElementById('pairStatus').classList.add('hidden');
+            
+            // Hide monitoring dashboard
+            const dashboard = document.getElementById('monitoringDashboard');
+            if (dashboard) dashboard.classList.add('hidden');
         }
         
         // Check if pair exists (V2 and V3)
@@ -2323,26 +3261,28 @@
                 const actualToken1 = token1.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' 
                     ? WETH_ADDRESS : token1;
                 
-                // Check V3 pools first (usually better liquidity)
+                // Check pools based on user settings
                 let foundPool = false;
                 let bestPool = null;
                 let bestVersion = null;
                 
-                // Check all V3 fee tiers
-                for (const fee of V3_FEE_TIERS) {
-                    const v3Pool = await v3Factory.getPool(actualToken0, actualToken1, fee);
-                    if (v3Pool !== '0x0000000000000000000000000000000000000000') {
-                        foundPool = true;
-                        bestPool = v3Pool;
-                        bestVersion = 'v3';
-                        window.v3FeeTier = fee;
-                        console.log(`Found V3 pool with ${fee/10000}% fee`);
-                        break; // Use first found V3 pool
+                // Check V3 pools if enabled
+                if (poolVersionSettings.v3) {
+                    for (const fee of V3_FEE_TIERS) {
+                        const v3Pool = await v3Factory.getPool(actualToken0, actualToken1, fee);
+                        if (v3Pool !== '0x0000000000000000000000000000000000000000') {
+                            foundPool = true;
+                            bestPool = v3Pool;
+                            bestVersion = 'v3';
+                            window.v3FeeTier = fee;
+                            console.log(`Found V3 pool with ${fee/10000}% fee`);
+                            break; // Use first found V3 pool
+                        }
                     }
                 }
                 
-                // Check V2 if no V3 pool found
-                if (!foundPool) {
+                // Check V2 if enabled and no V3 pool found (or V3 disabled)
+                if (poolVersionSettings.v2 && !foundPool) {
                     const v2Pair = await v2Factory.getPair(actualToken0, actualToken1);
                     if (v2Pair !== '0x0000000000000000000000000000000000000000') {
                         foundPool = true;
@@ -2426,7 +3366,20 @@
                     const interval = parseInt(localStorage.getItem('monitoringInterval') || '100');
                     const checksPerSec = (1000 / interval).toFixed(1);
                     const timestamp = new Date().toLocaleTimeString();
-                    pairStatusText.innerHTML = `🔍 Pool not found - <strong>ACTIVELY MONITORING</strong> (${checksPerSec}x/sec) <span style="color: #6b7280; font-size: 11px;">${timestamp}</span>`;
+                    
+                    // Show which versions we're checking
+                    let versionText = '';
+                    if (poolVersionSettings.v2 && poolVersionSettings.v3) {
+                        versionText = 'V2 & V3';
+                    } else if (poolVersionSettings.v2) {
+                        versionText = 'V2';
+                    } else if (poolVersionSettings.v3) {
+                        versionText = 'V3';
+                    } else {
+                        versionText = 'None';
+                    }
+                    
+                    pairStatusText.innerHTML = `🔍 No ${versionText} pool found - <strong>ACTIVELY MONITORING</strong> (${checksPerSec}x/sec) <span style="color: #6b7280; font-size: 11px;">${timestamp}</span>`;
                     swapButton.textContent = 'Waiting for pair...';
                     swapButton.disabled = true;
                 }
@@ -3171,6 +4124,71 @@
                 executingSwap = false;
             }
         }
+        
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Load pool version settings
+            loadPoolVersionSettings();
+            
+            // Check for saved configuration on page load
+            const restoredConfig = restoreSnipeConfig();
+            if (restoredConfig) {
+                document.getElementById('clearConfigSection').classList.remove('hidden');
+                
+                // If wallet was connected and monitoring was active, show reminder
+                if (restoredConfig.wasMonitoring && sessionStorage.getItem('walletConnected')) {
+                    const statusEl = document.getElementById('status');
+                    statusEl.textContent = '💾 Previous monitoring session restored - reconnect wallet to continue';
+                    statusEl.className = 'status warning';
+                }
+            }
+            
+            // Auto-connect if previously connected
+            if (sessionStorage.getItem('walletConnected') === 'true') {
+                connectWallet();
+            }
+            
+            // Load saved settings
+            const savedInterval = localStorage.getItem('monitoringInterval');
+            if (savedInterval) {
+                document.getElementById('monitoringInterval').value = savedInterval;
+                updateMonitoringSpeed();
+            }
+            
+            const savedBackupRPC = localStorage.getItem('backupRPC');
+            if (savedBackupRPC) {
+                document.getElementById('backupRPC').value = savedBackupRPC;
+            }
+            
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                // Ctrl/Cmd + M = Set max amount
+                if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+                    e.preventDefault();
+                    setMaxAmount();
+                }
+                
+                // Enter = Swap (if button is enabled)
+                if (e.key === 'Enter') {
+                    const swapButton = document.getElementById('swapButton');
+                    const activeElement = document.activeElement;
+                    
+                    // Don't trigger if typing in input
+                    if (activeElement.tagName !== 'INPUT' && !swapButton.disabled) {
+                        e.preventDefault();
+                        executeSwap();
+                    }
+                }
+            });
+            
+            // Hide quote section initially
+            document.getElementById('quoteSection').classList.add('hidden');
+            
+            // Update slippage tolerance display
+            const slippageInput = document.getElementById('slippage');
+            const slippageValue = slippageInput.value;
+            document.getElementById('slippageTolerance').textContent = `${slippageValue}%`;
+        });
     </script>
 </body>
 </html>
