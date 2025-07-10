@@ -270,6 +270,22 @@
             background-color: #1f2937;
             color: #fbbf24;
             border: 1px solid #fbbf24;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0% { 
+                border-color: #fbbf24;
+                box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
+            }
+            50% { 
+                border-color: #f59e0b;
+                box-shadow: 0 0 0 8px rgba(251, 191, 36, 0);
+            }
+            100% { 
+                border-color: #fbbf24;
+                box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+            }
         }
         
         .pair-status.live {
@@ -287,7 +303,13 @@
         
         .monitoring-dot {
             display: inline-block;
-            width: 8px;
+            animation: blink 1s infinite;
+            font-size: 12px;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
             height: 8px;
             background-color: #fbbf24;
             border-radius: 50%;
@@ -298,6 +320,38 @@
         @keyframes blink {
             0%, 50% { opacity: 1; }
             51%, 100% { opacity: 0.3; }
+        }
+        
+        /* Snipe success animation */
+        @keyframes snipeSuccess {
+            0% { 
+                background-color: #191b1f;
+                border-color: #374151;
+            }
+            20% { 
+                background-color: #065f46;
+                border-color: #10b981;
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+            }
+            40% { 
+                background-color: #047857;
+                border-color: #059669;
+                box-shadow: 0 0 30px rgba(16, 185, 129, 0.8);
+            }
+            60% { 
+                background-color: #065f46;
+                border-color: #10b981;
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+            }
+            100% { 
+                background-color: #191b1f;
+                border-color: #374151;
+                box-shadow: none;
+            }
+        }
+        
+        .snipe-animation {
+            animation: snipeSuccess 2s ease-in-out;
         }
         
         .saved-pairs {
@@ -475,6 +529,16 @@
             </div>
         </div>
         
+        <!-- Clear Config Button (only shown if config exists) -->
+        <div id="clearConfigSection" class="hidden" style="text-align: center; margin: 15px 0;">
+            <button onclick="clearConfigWithWarning()" style="background-color: #ef4444; padding: 8px 16px; font-size: 14px;">
+                🗑️ Clear Saved Configuration
+            </button>
+            <p style="color: #9ca3af; font-size: 12px; margin-top: 5px;">
+                Session restored from previous page
+            </p>
+        </div>
+        
         <!-- Swap Section -->
         <div class="swap-section" id="swapSection" class="hidden">
             <!-- Saved Pairs -->
@@ -542,6 +606,9 @@
                 <div style="font-size: 11px; color: #9ca3af; margin-top: 8px;">
                     No limits! Set any % (even 10,000%)
                 </div>
+                <div id="slippageWarning" style="font-size: 11px; margin-top: 8px; padding: 6px 8px; border-radius: 4px; display: none;">
+                    <span id="slippageWarningText"></span>
+                </div>
             </div>
             
             <!-- Auto-Swap Settings -->
@@ -555,6 +622,52 @@
                 </div>
                 <div style="font-size: 11px; color: #fbbf24; margin-top: 8px;">
                     ⚠️ Will execute swap INSTANTLY when pair is found!
+                </div>
+                
+                <!-- Monitoring Speed Control -->
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #ef4444;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <label style="color: #fbbf24; font-size: 12px; margin: 0;">Monitoring Speed:</label>
+                        <input type="number" id="monitoringInterval" value="100" min="50" max="5000" step="50" 
+                               style="width: 80px; padding: 4px; background-color: #374151; border: 1px solid #4b5563; color: white; font-size: 12px;"
+                               oninput="updateMonitoringSpeed()">
+                        <span style="color: #9ca3af; font-size: 12px;">ms</span>
+                    </div>
+                    <div id="monitoringStats" style="font-size: 11px; color: #9ca3af;">
+                        <span id="checksPerSecond">10</span> checks/sec = <span id="requestsPerDay">864,000</span> requests/day
+                    </div>
+                    <div id="monitoringLiveStats" style="font-size: 11px; color: #6b7280; margin-top: 4px; display: none;">
+                        Uptime: <span id="uptime">00:00:00</span> • Checks: <span id="checksCount">0</span> • Last: <span id="lastCheck">-</span>
+                    </div>
+                </div>
+                
+                <!-- RPC Fallback -->
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #ef4444;">
+                    <div style="margin-bottom: 8px;">
+                        <label style="color: #fbbf24; font-size: 12px; margin: 0;">Backup RPC (Optional):</label>
+                        <input type="text" id="backupRPC" placeholder="https://mainnet.infura.io/v3/YOUR_KEY" 
+                               style="width: 100%; padding: 4px; margin-top: 4px; background-color: #374151; border: 1px solid #4b5563; color: white; font-size: 11px;"
+                               onchange="saveBackupRPC()">
+                    </div>
+                    <div style="font-size: 10px; color: #9ca3af;">
+                        Auto-switches if primary RPC fails during monitoring
+                    </div>
+                </div>
+                
+                <!-- MEV Protection Note -->
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #ef4444;">
+                    <div style="background: #78350f; border: 1px solid #f59e0b; border-radius: 6px; padding: 8px; margin-bottom: 6px;">
+                        <div style="font-size: 12px; color: #fbbf24; font-weight: 600; margin-bottom: 4px;">
+                            🛡️ MEV Protection Recommended
+                        </div>
+                        <div style="font-size: 10px; color: #fed7aa; line-height: 1.3;">
+                            For better protection against MEV bots, consider using:<br>
+                            <code style="background: #92400e; padding: 1px 3px; border-radius: 2px;">rpc.mevblocker.io</code>
+                        </div>
+                    </div>
+                    <div style="font-size: 9px; color: #9ca3af;">
+                        MEV protection helps prevent front-running during high-value trades
+                    </div>
                 </div>
             </div>
             
@@ -591,6 +704,14 @@
         
         <!-- Status Messages -->
         <div class="status" id="status"></div>
+        
+        <!-- Transaction History -->
+        <div id="transactionHistory" style="margin-top: 20px; display: none;">
+            <h3 style="margin: 0 0 10px 0; color: #9ca3af; font-size: 14px;">Transaction History</h3>
+            <div id="transactionList" style="max-height: 200px; overflow-y: auto;">
+                <!-- Transaction items will be added here -->
+            </div>
+        </div>
     </div>
     
     <script>
@@ -601,6 +722,56 @@
         
         // Token cache for speed
         const tokenCache = new Map();
+        
+        // Musical alarm for pool detection - plays "Ode to Joy" 
+        function playAlarmSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // "Ode to Joy" melody (first few notes)
+                const melody = [
+                    { note: 329.63, duration: 0.4 }, // E
+                    { note: 329.63, duration: 0.4 }, // E
+                    { note: 349.23, duration: 0.4 }, // F
+                    { note: 392.00, duration: 0.4 }, // G
+                    { note: 392.00, duration: 0.4 }, // G
+                    { note: 349.23, duration: 0.4 }, // F
+                    { note: 329.63, duration: 0.4 }, // E
+                    { note: 293.66, duration: 0.4 }, // D
+                ];
+                
+                let currentTime = audioContext.currentTime;
+                
+                melody.forEach((note, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(note.note, currentTime);
+                    oscillator.type = 'sine'; // Smoother, more musical sound
+                    
+                    // Envelope for musical note
+                    gainNode.gain.setValueAtTime(0, currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0.3, currentTime + 0.05);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + note.duration);
+                    
+                    oscillator.start(currentTime);
+                    oscillator.stop(currentTime + note.duration);
+                    
+                    currentTime += note.duration;
+                });
+                
+                // Play twice for attention
+                setTimeout(() => playAlarmSound(), 3500);
+                
+            } catch (error) {
+                console.error('Could not play alarm sound:', error);
+                // Fallback to system beep
+                console.log('\u0007'); // Bell character
+            }
+        }
         
         // Common tokens for quick access
         const COMMON_TOKENS = {
@@ -656,6 +827,17 @@
         // Pair monitoring
         let pairMonitorInterval;
         let pairExists = false;
+        
+        // Monitoring stats
+        let monitoringStartTime = null;
+        let checksPerformed = 0;
+        let lastCheckTime = null;
+        
+        // Transaction history
+        let transactionHistory = [];
+        
+        // Execution lock to prevent duplicate swaps
+        let executingSwap = false;
         
         // Uniswap V2 Factory ABI for pair checking
         const FACTORY_ABI = [
@@ -717,13 +899,181 @@
             }
         ];
         
+        // Auto-snipe persistence functions
+        function saveSnipeConfig() {
+            if (!window.fromTokenInfo || !window.toTokenInfo) return;
+            
+            const config = {
+                fromToken: {
+                    address: window.fromTokenInfo.address,
+                    symbol: window.fromTokenInfo.symbol,
+                    decimals: window.fromTokenInfo.decimals
+                },
+                toToken: {
+                    address: window.toTokenInfo.address,
+                    symbol: window.toTokenInfo.symbol,
+                    decimals: window.toTokenInfo.decimals
+                },
+                amount: document.getElementById('amount').value,
+                slippage: document.getElementById('slippage').value,
+                autoSwapEnabled: document.getElementById('autoSwap').checked,
+                wasMonitoring: !!window.monitoringInterval,
+                savedAt: Date.now()
+            };
+            
+            sessionStorage.setItem('activeSnipeConfig', JSON.stringify(config));
+            console.log('Saved snipe config:', config);
+        }
+        
+        function restoreSnipeConfig() {
+            const configStr = sessionStorage.getItem('activeSnipeConfig');
+            if (!configStr) return false;
+            
+            try {
+                const config = JSON.parse(configStr);
+                
+                // No expiration - config persists until browser closes or manually cleared
+                
+                // Restore token selections
+                window.fromTokenInfo = config.fromToken;
+                window.toTokenInfo = config.toToken;
+                
+                // Update UI
+                document.getElementById('fromToken').value = config.fromToken.address;
+                document.getElementById('toToken').value = config.toToken.address;
+                document.getElementById('amount').value = config.amount;
+                document.getElementById('slippage').value = config.slippage;
+                
+                // Update token displays
+                document.querySelector('.token-select').textContent = config.fromToken.symbol;
+                document.querySelectorAll('.token-select')[1].textContent = config.toToken.symbol;
+                
+                console.log('Restored snipe config:', config);
+                return config;
+            } catch (error) {
+                console.error('Error restoring config:', error);
+                sessionStorage.removeItem('activeSnipeConfig');
+                return false;
+            }
+        }
+        
+        function clearSnipeConfig() {
+            sessionStorage.removeItem('activeSnipeConfig');
+            sessionStorage.removeItem('pendingTx');
+            document.getElementById('clearConfigSection').classList.add('hidden');
+            console.log('Cleared snipe config');
+        }
+        
+        function clearConfigWithWarning() {
+            const warning = `⚠️ Clear Saved Configuration?\n\n` +
+                `This will clear:\n` +
+                `• Token selections (${window.fromTokenInfo?.symbol || 'From'} → ${window.toTokenInfo?.symbol || 'To'})\n` +
+                `• Amount entered (${document.getElementById('amount').value || '0'})\n` +
+                `• Slippage setting (${document.getElementById('slippage').value}%)\n` +
+                `• Auto-swap state\n` +
+                `• Any monitoring in progress\n\n` +
+                `Are you sure?`;
+            
+            if (confirm(warning)) {
+                // Clear the config
+                clearSnipeConfig();
+                
+                // Reset form
+                document.getElementById('fromToken').value = '';
+                document.getElementById('toToken').value = '';
+                document.getElementById('amount').value = '';
+                document.getElementById('slippage').value = '50';
+                document.getElementById('autoSwap').checked = false;
+                
+                // Clear token info
+                window.fromTokenInfo = null;
+                window.toTokenInfo = null;
+                
+                // Stop monitoring if active
+                if (window.monitoringInterval) {
+                    stopPairMonitoring();
+                }
+                
+                // Update UI
+                document.getElementById('fromTokenBalance').textContent = 'Balance: -';
+                document.getElementById('toTokenBalance').textContent = 'Balance: -';
+                document.querySelector('.token-select').textContent = 'Select Token';
+                document.querySelectorAll('.token-select')[1].textContent = 'Select Token';
+                document.getElementById('pairStatus').classList.add('hidden');
+                document.getElementById('quoteSection').classList.add('hidden');
+                
+                // Update status
+                document.getElementById('status').textContent = 'Configuration cleared. Starting fresh.';
+                document.getElementById('status').className = 'status';
+            }
+        }
+        
+        // Track pending transactions
+        function savePendingTx(txHash) {
+            sessionStorage.setItem('pendingTx', JSON.stringify({
+                hash: txHash,
+                savedAt: Date.now()
+            }));
+        }
+        
+        function checkPendingTx() {
+            const pendingStr = sessionStorage.getItem('pendingTx');
+            if (!pendingStr) return;
+            
+            try {
+                const pending = JSON.parse(pendingStr);
+                // Check if less than 10 minutes old
+                if (Date.now() - pending.savedAt < 10 * 60 * 1000) {
+                    document.getElementById('status').textContent = `Checking pending transaction: ${pending.hash.slice(0, 10)}...`;
+                    document.getElementById('status').className = 'status warning';
+                    
+                    // Check transaction status
+                    provider.getTransactionReceipt(pending.hash).then(receipt => {
+                        if (receipt) {
+                            if (receipt.status === 1) {
+                                document.getElementById('status').textContent = `Previous transaction completed successfully!`;
+                                document.getElementById('status').className = 'status success';
+                            } else {
+                                document.getElementById('status').textContent = `Previous transaction failed`;
+                                document.getElementById('status').className = 'status error';
+                            }
+                            sessionStorage.removeItem('pendingTx');
+                        }
+                    });
+                }
+            } catch (error) {
+                sessionStorage.removeItem('pendingTx');
+            }
+        }
+        
+        // Add beforeunload warning
+        window.addEventListener('beforeunload', (e) => {
+            const autoSwapEnabled = document.getElementById('autoSwap').checked;
+            const isMonitoring = !!window.monitoringInterval;
+            
+            if (autoSwapEnabled || isMonitoring) {
+                e.preventDefault();
+                e.returnValue = 'Auto-snipe is active! Are you sure you want to leave?';
+                return 'Auto-snipe is active! Are you sure you want to leave?';
+            }
+        });
+        
         // Initialize on page load
         window.addEventListener('load', async () => {
             console.log('Page loaded');
             console.log('Ethers available:', typeof ethers !== 'undefined');
             
             // Initialize quote section with default slippage
-            document.getElementById('slippageTolerance').textContent = '50%';
+            document.getElementById('slippageTolerance').textContent = '100%';
+            
+            // Load saved monitoring interval
+            const savedInterval = localStorage.getItem('monitoringInterval') || '100';
+            document.getElementById('monitoringInterval').value = savedInterval;
+            updateMonitoringSpeed(); // Update display
+            
+            // Load saved backup RPC
+            const savedBackupRPC = localStorage.getItem('backupRPC') || '';
+            document.getElementById('backupRPC').value = savedBackupRPC;
             
             // Check if ethers is loaded
             if (typeof ethers === 'undefined') {
@@ -751,9 +1101,63 @@
             // Load saved token pairs
             loadSavedPairs();
             
+            // Add network change detection
+            if (window.ethereum) {
+                window.ethereum.on('chainChanged', (chainId) => {
+                    const networkId = parseInt(chainId);
+                    if (networkId !== 1) {
+                        stopPairMonitoring();
+                        document.getElementById('status').textContent = '⚠️ Please switch to Ethereum Mainnet';
+                        document.getElementById('status').className = 'status error';
+                        document.getElementById('swapButton').disabled = true;
+                    } else {
+                        document.getElementById('status').textContent = 'Connected to Ethereum Mainnet';
+                        document.getElementById('status').className = 'status success';
+                    }
+                });
+                
+                window.ethereum.on('accountsChanged', (accounts) => {
+                    if (accounts.length === 0) {
+                        // User disconnected wallet
+                        stopPairMonitoring();
+                        document.getElementById('status').textContent = 'Wallet disconnected';
+                        document.getElementById('status').className = 'status error';
+                        location.reload(); // Refresh to reset state
+                    }
+                });
+            }
+            
             // Check if wallet was previously connected
-            if (window.ethereum && window.ethereum.selectedAddress) {
+            const wasConnected = sessionStorage.getItem('walletConnected');
+            if (wasConnected && window.ethereum && window.ethereum.selectedAddress) {
                 connectWallet();
+            }
+            
+            // Restore snipe config if exists
+            const restoredConfig = restoreSnipeConfig();
+            if (restoredConfig) {
+                // Show clear config button
+                document.getElementById('clearConfigSection').classList.remove('hidden');
+                
+                // Wait for wallet connection then restore state
+                setTimeout(() => {
+                    if (userAddress) {
+                        // Check pending transactions
+                        checkPendingTx();
+                        
+                        // Re-enable auto-swap if it was enabled
+                        if (restoredConfig.autoSwapEnabled) {
+                            document.getElementById('autoSwap').checked = true;
+                            document.getElementById('status').textContent = '⚡ Auto-swap restored from previous session';
+                            document.getElementById('status').className = 'status error';
+                        }
+                        
+                        // Resume monitoring if it was active
+                        if (restoredConfig.wasMonitoring) {
+                            onAmountChange(); // This will trigger checkPairExists
+                        }
+                    }
+                }, 1000);
             }
         });
         
@@ -1100,6 +1504,9 @@
                 document.getElementById('walletAddress').textContent = 
                     userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
                 
+                // Save connection state
+                sessionStorage.setItem('walletConnected', 'true');
+                
                 // Get ETH balance
                 const balance = await provider.getBalance(userAddress);
                 const ethBalance = ethers.utils.formatEther(balance);
@@ -1276,6 +1683,11 @@
                 statusEl.textContent = '';
                 statusEl.className = 'status';
                 
+                // Save config if both tokens are selected
+                if (window.fromTokenInfo && window.toTokenInfo) {
+                    saveSnipeConfig();
+                }
+                
                 // Check if we can fetch quotes now
                 checkReadyForQuote();
                 
@@ -1308,6 +1720,11 @@
             }
             
             checkReadyForQuote();
+            
+            // Save config when amount changes
+            if (window.fromTokenInfo && window.toTokenInfo && amount) {
+                saveSnipeConfig();
+            }
             
             // Validate amount if we have token info
             if (window.fromTokenInfo && amount) {
@@ -1831,6 +2248,7 @@
             pairStatusDiv.classList.remove('hidden');
             pairStatusDiv.classList.add('monitoring');
             pairStatusDiv.classList.remove('live');
+            pairStatusText.innerHTML = '🔍 Checking for liquidity pool... <span class="monitoring-dot">⚫</span>';
             
             // Clear any existing interval
             stopPairMonitoring();
@@ -1838,10 +2256,29 @@
             // Check immediately
             await checkPairExists();
             
-            // Then check every 250ms
+            // Use user-configured interval
+            const monitoringInterval = parseInt(localStorage.getItem('monitoringInterval') || '100');
+            
+            // Initialize monitoring stats
+            monitoringStartTime = Date.now();
+            checksPerformed = 0;
+            lastCheckTime = null;
+            
+            // Show live stats
+            document.getElementById('monitoringLiveStats').style.display = 'block';
+            
+            // Set monitoring with user-defined interval
             pairMonitorInterval = setInterval(async () => {
                 await checkPairExists();
-            }, 250);
+            }, monitoringInterval);
+            
+            // Track monitoring state globally
+            window.monitoringInterval = pairMonitorInterval;
+            
+            // Update stats display every second
+            window.statsUpdateInterval = setInterval(updateMonitoringStats, 1000);
+            
+            console.log(`Monitoring started at ${monitoringInterval}ms intervals`);
         }
         
         // Stop monitoring
@@ -1849,13 +2286,32 @@
             if (pairMonitorInterval) {
                 clearInterval(pairMonitorInterval);
                 pairMonitorInterval = null;
+                window.monitoringInterval = null;
             }
+            
+            // Clear stats update interval
+            if (window.statsUpdateInterval) {
+                clearInterval(window.statsUpdateInterval);
+                window.statsUpdateInterval = null;
+            }
+            
+            // Hide live stats
+            document.getElementById('monitoringLiveStats').style.display = 'none';
+            
+            // Reset stats
+            monitoringStartTime = null;
+            checksPerformed = 0;
+            lastCheckTime = null;
+            
             document.getElementById('pairStatus').classList.add('hidden');
         }
         
         // Check if pair exists (V2 and V3)
         async function checkPairExists() {
             try {
+                // Update monitoring stats
+                checksPerformed++;
+                lastCheckTime = Date.now();
                 const v2Factory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
                 const v3Factory = new ethers.Contract(V3_FACTORY_ADDRESS, V3_FACTORY_ABI, provider);
                 const token0 = window.fromTokenInfo.address;
@@ -1917,21 +2373,44 @@
                         swapButton.disabled = true;
                         swapButton.style.backgroundColor = '#ef4444';
                         
+                        // PLAY ALARM SOUND IMMEDIATELY
+                        playAlarmSound();
+                        
                         // Stop monitoring
                         stopPairMonitoring();
                         
-                        // Execute swap automatically after fetching quote
-                        setTimeout(async () => {
-                            await fetchQuote();
-                            // Small delay to ensure quote is displayed
-                            setTimeout(() => executeSwap(), 100);
-                        }, 100);
+                        // Execute swap IMMEDIATELY - no delays for sniping!
+                        // Skip quote fetching - we don't need exact amounts
+                        const detectionTime = Date.now();
+                        console.log('AUTO-SWAP: Pool detected at', new Date(detectionTime).toISOString());
+                        
+                        pairStatusText.textContent = `🚀 ${versionText} POOL FOUND! Executing snipe...`;
+                        
+                        // Calculate minimum amount directly (with high slippage)
+                        const amount = document.getElementById('amount').value;
+                        const amountIn = ethers.utils.parseUnits(amount, window.fromTokenInfo.decimals);
+                        const slippage = parseFloat(document.getElementById('slippage').value);
+                        
+                        // For sniping, accept any amount above 0
+                        window.minAmountOut = ethers.BigNumber.from(1);
+                        
+                        // Store start time for performance tracking
+                        window.snipeStartTime = detectionTime;
+                        
+                        // Execute immediately with lock check
+                        if (!executingSwap) {
+                            executeSwap();
+                        } else {
+                            console.log('Swap already in progress, skipping duplicate execution');
+                        }
                     } else {
                         const versionText = bestVersion === 'v3' ? `V3 (${window.v3FeeTier/10000}% fee)` : 'V2';
                         pairStatusText.textContent = `🚀 ${versionText} PAIR IS LIVE! READY TO SWAP!`;
                         swapButton.textContent = 'SWAP NOW! (Press Enter)';
                         swapButton.disabled = false;
                         swapButton.style.backgroundColor = '#10b981';
+                        
+                        // No alarm sound for manual mode - just visual notification
                         
                         // Try to fetch quote
                         fetchQuote();
@@ -1944,18 +2423,75 @@
                 } else {
                     // No pair yet
                     pairExists = false;
-                    pairStatusText.textContent = 'Pair not live yet - Monitoring...';
+                    const interval = parseInt(localStorage.getItem('monitoringInterval') || '100');
+                    const checksPerSec = (1000 / interval).toFixed(1);
+                    const timestamp = new Date().toLocaleTimeString();
+                    pairStatusText.innerHTML = `🔍 Pool not found - <strong>ACTIVELY MONITORING</strong> (${checksPerSec}x/sec) <span style="color: #6b7280; font-size: 11px;">${timestamp}</span>`;
                     swapButton.textContent = 'Waiting for pair...';
                     swapButton.disabled = true;
                 }
             } catch (error) {
                 console.error('Error checking pair:', error);
+                
+                // Check if this is an RPC failure
+                if (error.message?.includes('network') || 
+                    error.message?.includes('timeout') || 
+                    error.message?.includes('connection') ||
+                    error.code === 'NETWORK_ERROR') {
+                    
+                    console.log('RPC failure detected, attempting failover...');
+                    
+                    // Try to switch to backup RPC
+                    const switched = await switchToBackupRPC();
+                    
+                    if (!switched) {
+                        // Both RPCs failed - show error
+                        const statusEl = document.getElementById('status');
+                        statusEl.textContent = '❌ RPC connection failed - check network or backup RPC';
+                        statusEl.className = 'status error';
+                        
+                        // Stop monitoring
+                        stopPairMonitoring();
+                    }
+                }
             }
         }
         
         function onSlippageChange() {
-            const slippage = document.getElementById('slippage').value;
+            const slippage = parseFloat(document.getElementById('slippage').value) || 0;
             console.log('Slippage changed to:', slippage + '%');
+            
+            // Show slippage warning for manual swaps only
+            const autoSwapEnabled = document.getElementById('autoSwap').checked;
+            const warningDiv = document.getElementById('slippageWarning');
+            const warningText = document.getElementById('slippageWarningText');
+            
+            if (!autoSwapEnabled) {
+                // Manual swap warnings
+                if (slippage > 50) {
+                    warningDiv.style.display = 'block';
+                    warningDiv.style.background = '#7f1d1d';
+                    warningDiv.style.color = '#ef4444';
+                    warningDiv.style.border = '1px solid #ef4444';
+                    warningText.textContent = `🚨 EXTREME SLIPPAGE WARNING: ${slippage}% - You may lose significant funds!`;
+                } else if (slippage > 10) {
+                    warningDiv.style.display = 'block';
+                    warningDiv.style.background = '#78350f';
+                    warningDiv.style.color = '#fbbf24';
+                    warningDiv.style.border = '1px solid #f59e0b';
+                    warningText.textContent = `⚠️ High slippage: ${slippage}% - Consider reducing if possible`;
+                } else {
+                    warningDiv.style.display = 'none';
+                }
+            } else {
+                // Auto-swap mode - no warnings (slippage expected for sniping)
+                warningDiv.style.display = 'none';
+            }
+            
+            // Save config when slippage changes
+            if (window.fromTokenInfo && window.toTokenInfo) {
+                saveSnipeConfig();
+            }
             
             // Update minimum received if we have a quote
             if (window.fromTokenInfo && window.toTokenInfo) {
@@ -1966,19 +2502,271 @@
             }
         }
         
+        // Save backup RPC URL
+        function saveBackupRPC() {
+            const backupRPC = document.getElementById('backupRPC').value.trim();
+            if (backupRPC) {
+                localStorage.setItem('backupRPC', backupRPC);
+                console.log('Backup RPC saved:', backupRPC);
+            } else {
+                localStorage.removeItem('backupRPC');
+            }
+        }
+        
+        // Switch to backup RPC provider
+        async function switchToBackupRPC() {
+            const backupRPC = localStorage.getItem('backupRPC');
+            if (!backupRPC) {
+                console.error('No backup RPC configured');
+                return false;
+            }
+            
+            try {
+                console.log('Switching to backup RPC:', backupRPC);
+                
+                // Create new provider with backup RPC
+                const backupProvider = new ethers.providers.JsonRpcProvider(backupRPC);
+                
+                // Test the connection
+                await backupProvider.getBlockNumber();
+                
+                // Switch providers
+                provider = backupProvider;
+                signer = provider.getSigner();
+                
+                // Recreate router contracts
+                routerContract = new ethers.Contract(
+                    UNISWAP_V2_ROUTER, 
+                    UNISWAP_V2_ROUTER_ABI, 
+                    signer
+                );
+                v3RouterContract = new ethers.Contract(
+                    UNISWAP_V3_ROUTER,
+                    V3_SWAP_ROUTER_ABI,
+                    signer
+                );
+                
+                // Update status
+                const statusEl = document.getElementById('status');
+                statusEl.textContent = '🔄 Switched to backup RPC - monitoring continues';
+                statusEl.className = 'status success';
+                
+                console.log('Successfully switched to backup RPC');
+                return true;
+                
+            } catch (error) {
+                console.error('Backup RPC also failed:', error);
+                return false;
+            }
+        }
+        
+        // Update monitoring speed display and validate input
+        function updateMonitoringSpeed() {
+            const intervalInput = document.getElementById('monitoringInterval');
+            let interval = parseInt(intervalInput.value) || 100;
+            
+            // Validate and clamp values
+            if (interval < 50) {
+                interval = 50;
+                intervalInput.value = 50;
+            } else if (interval > 5000) {
+                interval = 5000;
+                intervalInput.value = 5000;
+            }
+            
+            // Calculate stats
+            const checksPerSecond = (1000 / interval).toFixed(1);
+            const requestsPerDay = Math.round((86400 * 1000) / interval);
+            
+            // Update display
+            document.getElementById('checksPerSecond').textContent = checksPerSecond;
+            document.getElementById('requestsPerDay').textContent = requestsPerDay.toLocaleString();
+            
+            // Color code based on request count
+            const statsDiv = document.getElementById('monitoringStats');
+            if (requestsPerDay > 100000) {
+                statsDiv.style.color = '#ef4444'; // Red - exceeds Infura free tier
+            } else if (requestsPerDay > 50000) {
+                statsDiv.style.color = '#f59e0b'; // Orange - getting close
+            } else {
+                statsDiv.style.color = '#9ca3af'; // Gray - safe
+            }
+            
+            // Save preference
+            localStorage.setItem('monitoringInterval', interval);
+            
+            // If currently monitoring, restart with new interval
+            if (pairMonitorInterval) {
+                console.log('Updating monitoring interval to:', interval + 'ms');
+                stopPairMonitoring();
+                startPairMonitoring();
+            }
+        }
+        
+        // Update monitoring stats display
+        function updateMonitoringStats() {
+            if (!monitoringStartTime) return;
+            
+            const now = Date.now();
+            const uptimeMs = now - monitoringStartTime;
+            
+            // Format uptime as HH:MM:SS
+            const hours = Math.floor(uptimeMs / 3600000);
+            const minutes = Math.floor((uptimeMs % 3600000) / 60000);
+            const seconds = Math.floor((uptimeMs % 60000) / 1000);
+            const uptimeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Format last check time
+            const lastCheckStr = lastCheckTime ? 
+                `${Math.floor((now - lastCheckTime) / 1000)}s ago` : 
+                '-';
+            
+            // Update display
+            document.getElementById('uptime').textContent = uptimeStr;
+            document.getElementById('checksCount').textContent = checksPerformed.toLocaleString();
+            document.getElementById('lastCheck').textContent = lastCheckStr;
+        }
+        
+        // Add transaction to history
+        function addTransactionToHistory(txData) {
+            const transaction = {
+                id: Date.now(),
+                timestamp: new Date(),
+                ...txData
+            };
+            
+            // Add to beginning of array
+            transactionHistory.unshift(transaction);
+            
+            // Keep only last 10 transactions
+            if (transactionHistory.length > 10) {
+                transactionHistory = transactionHistory.slice(0, 10);
+            }
+            
+            // Update display
+            updateTransactionHistoryDisplay();
+            
+            // Show history section if it's hidden
+            document.getElementById('transactionHistory').style.display = 'block';
+        }
+        
+        // Update transaction history display
+        function updateTransactionHistoryDisplay() {
+            const listDiv = document.getElementById('transactionList');
+            listDiv.innerHTML = '';
+            
+            if (transactionHistory.length === 0) {
+                listDiv.innerHTML = '<div style="color: #6b7280; font-size: 12px; padding: 10px; text-align: center;">No transactions yet</div>';
+                return;
+            }
+            
+            transactionHistory.forEach((tx, index) => {
+                const txDiv = document.createElement('div');
+                txDiv.style.cssText = `
+                    padding: 8px 12px;
+                    margin: 4px 0;
+                    border-radius: 6px;
+                    background: ${tx.success ? '#065f46' : '#7f1d1d'};
+                    border: 1px solid ${tx.success ? '#10b981' : '#ef4444'};
+                    font-size: 11px;
+                    color: ${tx.success ? '#d1fae5' : '#fee2e2'};
+                `;
+                
+                const statusIcon = tx.success ? '✅' : '❌';
+                const timeStr = tx.timestamp.toLocaleTimeString();
+                const detectionTime = tx.detectionToExecution ? ` (${tx.detectionToExecution}ms)` : '';
+                const positionInfo = tx.positionInBlock ? ` • Position: #${tx.positionInBlock}` : '';
+                
+                txDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>${statusIcon} ${tx.type || 'Swap'}${positionInfo}</span>
+                        <span style="font-size: 10px; opacity: 0.8;">${timeStr}</span>
+                    </div>
+                    <div style="margin-top: 2px; font-size: 10px; opacity: 0.9;">
+                        ${tx.hash ? `Hash: ${tx.hash.slice(0, 10)}...` : tx.error}${detectionTime}
+                    </div>
+                `;
+                
+                // Add click to view on etherscan
+                if (tx.hash) {
+                    txDiv.style.cursor = 'pointer';
+                    txDiv.onclick = () => {
+                        window.open(`https://etherscan.io/tx/${tx.hash}`, '_blank');
+                    };
+                }
+                
+                listDiv.appendChild(txDiv);
+            });
+        }
+        
+        // Trigger snipe success animation
+        function triggerSnipeAnimation() {
+            const container = document.querySelector('.container');
+            
+            // Remove any existing animation
+            container.classList.remove('snipe-animation');
+            
+            // Force reflow to ensure the class is fully removed
+            container.offsetHeight;
+            
+            // Add animation class
+            container.classList.add('snipe-animation');
+            
+            // Remove animation class after animation completes
+            setTimeout(() => {
+                container.classList.remove('snipe-animation');
+            }, 2000);
+        }
+        
         // Handle auto-swap toggle
-        function onAutoSwapChange() {
+        async function onAutoSwapChange() {
             const autoSwap = document.getElementById('autoSwap');
             const statusEl = document.getElementById('status');
             
             if (autoSwap.checked) {
-                // Show warning
+                // First check if token needs approval
+                if (window.fromTokenInfo && window.fromTokenInfo.symbol !== 'ETH' && signer) {
+                    try {
+                        const tokenContract = new ethers.Contract(
+                            window.fromTokenInfo.address,
+                            ERC20_ABI,
+                            provider
+                        );
+                        
+                        // Check allowance for both routers
+                        const [v2Allowance, v3Allowance] = await Promise.all([
+                            tokenContract.allowance(userAddress, UNISWAP_V2_ROUTER),
+                            tokenContract.allowance(userAddress, UNISWAP_V3_ROUTER)
+                        ]);
+                        
+                        // If either router has no allowance, warn user
+                        if (v2Allowance.eq(0) || v3Allowance.eq(0)) {
+                            statusEl.textContent = '❌ Token not approved! Please approve token first before enabling auto-swap.';
+                            statusEl.className = 'status error';
+                            autoSwap.checked = false;
+                            
+                            // Highlight approve button
+                            const approveBtn = document.getElementById('approveButton');
+                            approveBtn.style.animation = 'pulse 1s ease-in-out 3';
+                            
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Error checking approval:', error);
+                        statusEl.textContent = 'Error checking token approval';
+                        statusEl.className = 'status error';
+                        autoSwap.checked = false;
+                        return;
+                    }
+                }
+                
+                // Show warning only after approval check passes
                 const confirmed = confirm(
                     '⚠️ WARNING: Auto-Swap Mode\n\n' +
                     'This will AUTOMATICALLY execute the swap the moment a liquidity pair is detected!\n\n' +
                     '• Make sure your amounts are correct\n' +
                     '• Make sure your slippage is set\n' +
-                    '• Make sure tokens are pre-approved\n' +
+                    '• Token approval verified ✓\n' +
                     '• This could result in immediate loss if settings are wrong\n\n' +
                     'Are you SURE you want to enable auto-swap?'
                 );
@@ -1999,10 +2787,23 @@
                         statusEl.textContent = '⚠️ Pre-approve your token before enabling auto-swap!';
                     }
                 }
+                
+                // Save config with auto-swap enabled
+                if (window.fromTokenInfo && window.toTokenInfo) {
+                    saveSnipeConfig();
+                }
             } else {
                 statusEl.textContent = 'Auto-swap disabled';
                 statusEl.className = 'status';
+                
+                // Save config with auto-swap disabled
+                if (window.fromTokenInfo && window.toTokenInfo) {
+                    saveSnipeConfig();
+                }
             }
+            
+            // Update slippage warning display based on auto-swap state
+            onSlippageChange();
         }
         
         // Check token approval
@@ -2063,6 +2864,13 @@
         }
         
         async function executeSwap() {
+            // Prevent duplicate execution
+            if (executingSwap) {
+                console.log('Swap already in progress, preventing duplicate execution');
+                return;
+            }
+            executingSwap = true;
+            
             const statusEl = document.getElementById('status');
             const swapButton = document.getElementById('swapButton');
             const amount = document.getElementById('amount').value;
@@ -2081,6 +2889,19 @@
                 // Validate inputs
                 if (!window.fromTokenInfo || !window.toTokenInfo || !window.minAmountOut) {
                     statusEl.textContent = 'Please enter valid tokens and amount';
+                    statusEl.className = 'status error';
+                    return;
+                }
+                
+                // Prevent same token swaps
+                const fromAddr = window.fromTokenInfo.address.toLowerCase();
+                const toAddr = window.toTokenInfo.address.toLowerCase();
+                const wethAddr = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
+                
+                if (fromAddr === toAddr || 
+                    (fromAddr === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' && toAddr === wethAddr) ||
+                    (toAddr === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' && fromAddr === wethAddr)) {
+                    statusEl.textContent = 'Cannot swap identical tokens';
                     statusEl.className = 'status error';
                     return;
                 }
@@ -2185,13 +3006,119 @@
                 
                 statusEl.textContent = `Transaction sent! Hash: ${tx.hash.slice(0, 10)}...`;
                 
-                // Wait for confirmation
-                const receipt = await tx.wait();
+                // Save pending transaction
+                savePendingTx(tx.hash);
+                
+                // Store swap amount for display
+                const swapAmountIn = amount;
+                
+                // Wait for confirmation with timeout
+                const receipt = await Promise.race([
+                    tx.wait(),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Transaction timeout after 5 minutes')), 300000)
+                    )
+                ]);
                 
                 if (receipt.status === 1) {
                     const versionText = selectedRouter === 'v3' ? `V3` : 'V2';
-                    statusEl.textContent = `${versionText} swap successful! Gas used: ${receipt.gasUsed.toString()}`;
+                    
+                    // Parse logs to get actual output amount
+                    let amountOutActual = '0';
+                    try {
+                        // Look for Transfer events in logs to find the actual amount received
+                        for (const log of receipt.logs) {
+                            // Check if this is a Transfer event (topic0 = Transfer event signature)
+                            if (log.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') {
+                                // Parse the Transfer event
+                                const iface = new ethers.utils.Interface(ERC20_ABI);
+                                const parsed = iface.parseLog(log);
+                                
+                                // Check if transfer is TO our address (we're receiving tokens)
+                                const toAddress = parsed.args.to.toLowerCase();
+                                if (toAddress === userAddress.toLowerCase()) {
+                                    // Check if this is the output token
+                                    const tokenAddress = log.address.toLowerCase();
+                                    const expectedToken = window.toTokenInfo.address.toLowerCase();
+                                    
+                                    // Handle ETH/WETH conversion
+                                    if ((expectedToken === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' && tokenAddress === WETH_ADDRESS.toLowerCase()) ||
+                                        tokenAddress === expectedToken) {
+                                        amountOutActual = parsed.args.value.toString();
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // If we couldn't find output amount from logs, use minAmountOut as estimate
+                        if (amountOutActual === '0' && window.minAmountOut) {
+                            amountOutActual = window.minAmountOut.toString();
+                        }
+                    } catch (error) {
+                        console.error('Error parsing logs:', error);
+                    }
+                    
+                    // Format amounts for display
+                    const formattedIn = `${swapAmountIn} ${window.fromTokenInfo.symbol}`;
+                    const formattedOut = amountOutActual !== '0' 
+                        ? `${ethers.utils.formatUnits(amountOutActual, window.toTokenInfo.decimals)} ${window.toTokenInfo.symbol}`
+                        : `>${ethers.utils.formatUnits(window.minAmountOut, window.toTokenInfo.decimals)} ${window.toTokenInfo.symbol}`;
+                    
+                    let successMessage = `Paid: ${formattedIn}, Received: ${formattedOut}`;
+                    
+                    // If this was an auto-snipe, show timing first
+                    if (window.snipeStartTime) {
+                        const totalTime = Date.now() - window.snipeStartTime;
+                        successMessage = `🎯 SNIPE COMPLETE in ${totalTime}ms! ${successMessage}`;
+                        console.log(`AUTO-SWAP PERFORMANCE: Detection to completion = ${totalTime}ms`);
+                        window.snipeStartTime = null; // Reset
+                    } else {
+                        successMessage = `✅ ${versionText} swap successful! ${successMessage}`;
+                    }
+                    
+                    // Add gas info
+                    successMessage += ` (Gas: ${receipt.gasUsed.toString()})`;
+                    
+                    statusEl.textContent = successMessage;
                     statusEl.className = 'status success';
+                    
+                    // Calculate position in block (for competitive analysis)
+                    let positionInBlock = null;
+                    try {
+                        const block = await provider.getBlock(receipt.blockNumber);
+                        const txIndex = block.transactions.findIndex(blockTx => blockTx === tx.hash);
+                        positionInBlock = txIndex + 1; // 1-based position
+                        
+                        // Add position info to success message if this was a snipe
+                        if (window.snipeStartTime) {
+                            successMessage += ` [Position: #${positionInBlock}/${block.transactions.length}]`;
+                            statusEl.textContent = successMessage;
+                        }
+                    } catch (error) {
+                        console.error('Error getting block position:', error);
+                    }
+                    
+                    // Trigger visual success animation for snipes
+                    if (window.snipeStartTime) {
+                        triggerSnipeAnimation();
+                    }
+                    
+                    // Add to transaction history
+                    const detectionTime = window.snipeStartTime ? Date.now() - window.snipeStartTime : null;
+                    addTransactionToHistory({
+                        success: true,
+                        type: window.snipeStartTime ? 'Auto-Snipe' : 'Manual Swap',
+                        hash: tx.hash,
+                        detectionToExecution: detectionTime,
+                        amountIn: formattedIn,
+                        amountOut: formattedOut,
+                        gasUsed: receipt.gasUsed.toString(),
+                        positionInBlock: positionInBlock,
+                        blockNumber: receipt.blockNumber
+                    });
+                    
+                    // Clear saved config after successful swap
+                    clearSnipeConfig();
                     
                     // Refresh balances after swap
                     setTimeout(() => {
@@ -2201,6 +3128,14 @@
                 } else {
                     statusEl.textContent = 'Swap failed!';
                     statusEl.className = 'status error';
+                    
+                    // Add failed transaction to history
+                    addTransactionToHistory({
+                        success: false,
+                        type: window.snipeStartTime ? 'Auto-Snipe' : 'Manual Swap',
+                        hash: tx.hash,
+                        error: 'Transaction failed'
+                    });
                 }
                 
             } catch (error) {
@@ -2220,9 +3155,20 @@
                 
                 statusEl.textContent = errorMsg;
                 statusEl.className = 'status error';
+                
+                // Add failed transaction to history
+                addTransactionToHistory({
+                    success: false,
+                    type: window.snipeStartTime ? 'Auto-Snipe' : 'Manual Swap',
+                    error: errorMsg
+                });
+                
             } finally {
                 swapButton.disabled = false;
                 swapButton.textContent = 'Swap';
+                
+                // Clear execution lock
+                executingSwap = false;
             }
         }
     </script>
