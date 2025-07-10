@@ -1245,7 +1245,7 @@
         <!-- Clear Config Button (only shown if config exists) -->
         <div id="clearConfigSection" class="hidden" style="text-align: center; margin: 15px 0;">
             <button onclick="clearConfigWithWarning()" style="background-color: #ef4444; padding: 8px 16px; font-size: 14px;">
-                🗑️ Clear Saved Configuration
+                🗑️ Clear Cache & Config
             </button>
             <p style="color: #9ca3af; font-size: 12px; margin-top: 5px;">
                 Session restored from previous page
@@ -1363,15 +1363,13 @@
             <div class="slippage-group">
                 <div class="slippage-header">
                     <label style="margin-bottom: 0;">Slippage Tolerance</label>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        <input type="text" id="slippage" class="slippage-input" value="100" 
-                               pattern="[0-9]*\.?[0-9]*" 
-                               inputmode="decimal"
-                               autocomplete="off"
-                               oninput="this.value = this.value.replace(/[^0-9.]/g, ''); onSlippageChange();"
-                               onclick="this.select();"
-                               onfocus="this.select();">
-                        <span style="color: var(--text-secondary);">%</span>
+                    <div style="position: relative; display: inline-block;">
+                        <input type="text" 
+                               id="slippage" 
+                               value="100" 
+                               oninput="onSlippageChange()"
+                               style="width: 80px; padding: 8px; font-size: 14px; text-align: right; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; color: white; position: relative; z-index: 10;">
+                        <span style="position: absolute; right: -20px; top: 50%; transform: translateY(-50%); color: #9ca3af;">%</span>
                     </div>
                 </div>
                 <div style="font-size: 11px; color: #9ca3af; margin-top: 8px;">
@@ -1879,16 +1877,30 @@
         }
         
         function clearConfigWithWarning() {
-            const warning = `⚠️ Clear Saved Configuration?\n\n` +
+            const warning = `⚠️ Clear All Data & Cache?\n\n` +
                 `This will clear:\n` +
                 `• Token selections (${window.fromTokenInfo?.symbol || 'From'} → ${window.toTokenInfo?.symbol || 'To'})\n` +
                 `• Amount entered (${document.getElementById('amount').value || '0'})\n` +
                 `• Slippage setting (${document.getElementById('slippage').value}%)\n` +
                 `• Auto-swap state\n` +
-                `• Any monitoring in progress\n\n` +
+                `• Any monitoring in progress\n` +
+                `• Token cache (fetched balances/info)\n` +
+                `• All saved settings\n\n` +
                 `Are you sure?`;
             
             if (confirm(warning)) {
+                // Clear the token cache
+                tokenCache.clear();
+                console.log('Token cache cleared');
+                
+                // Clear all localStorage data
+                localStorage.clear();
+                console.log('All localStorage cleared');
+                
+                // Clear session storage
+                sessionStorage.clear();
+                console.log('Session storage cleared');
+                
                 // Clear the config
                 clearSnipeConfig();
                 
@@ -1907,6 +1919,37 @@
                 if (window.monitoringInterval) {
                     stopPairMonitoring();
                 }
+                
+                // Reset balance displays
+                document.getElementById('fromTokenBalance').textContent = 'Balance: -';
+                document.getElementById('toTokenBalance').textContent = 'Balance: -';
+                
+                // Clear quote section
+                document.getElementById('expectedOutput').textContent = '-';
+                document.getElementById('minimumReceived').textContent = '-';
+                document.getElementById('priceImpact').textContent = '-';
+                
+                // Reset swap button
+                const swapButton = document.getElementById('swapButton');
+                swapButton.textContent = 'Enter token addresses';
+                swapButton.disabled = true;
+                
+                // Reset approval button
+                const approveButton = document.getElementById('approveButton');
+                approveButton.textContent = 'Approve Token';
+                approveButton.disabled = true;
+                approveButton.style.backgroundColor = '#4b5563';
+                
+                // Clear any status messages
+                const statusEl = document.getElementById('status');
+                statusEl.textContent = 'Cache and configuration cleared successfully!';
+                statusEl.className = 'status success';
+                
+                // Reload saved settings defaults after clearing
+                setTimeout(() => {
+                    statusEl.textContent = '';
+                    statusEl.className = 'status';
+                }, 3000);
                 
                 // Update UI
                 document.getElementById('fromTokenBalance').textContent = 'Balance: -';
