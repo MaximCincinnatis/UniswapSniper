@@ -267,6 +267,8 @@
             margin-bottom: 24px;
             border: 1px solid var(--border-color);
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
         }
         
         .slippage-group:hover {
@@ -291,6 +293,21 @@
             border-radius: 8px;
             color: var(--text-primary);
             transition: all 0.3s ease;
+            cursor: text;
+            -webkit-appearance: none;
+            -moz-appearance: textfield;
+            user-select: text;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            pointer-events: auto;
+            z-index: 1;
+        }
+        
+        /* Remove spinner buttons for number input */
+        .slippage-input::-webkit-inner-spin-button,
+        .slippage-input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
         
         .slippage-input:hover {
@@ -1346,9 +1363,15 @@
             <div class="slippage-group">
                 <div class="slippage-header">
                     <label style="margin-bottom: 0;">Slippage Tolerance</label>
-                    <div>
-                        <input type="number" id="slippage" class="slippage-input" value="100" step="any" min="0" oninput="onSlippageChange()">
-                        <span>%</span>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <input type="text" id="slippage" class="slippage-input" value="100" 
+                               pattern="[0-9]*\.?[0-9]*" 
+                               inputmode="decimal"
+                               autocomplete="off"
+                               oninput="this.value = this.value.replace(/[^0-9.]/g, ''); onSlippageChange();"
+                               onclick="this.select();"
+                               onfocus="this.select();">
+                        <span style="color: var(--text-secondary);">%</span>
                     </div>
                 </div>
                 <div style="font-size: 11px; color: #9ca3af; margin-top: 8px;">
@@ -3457,7 +3480,8 @@
         }
         
         function onSlippageChange() {
-            const slippage = parseFloat(document.getElementById('slippage').value) || 0;
+            const slippageInput = document.getElementById('slippage');
+            const slippage = parseFloat(slippageInput.value) || 0;
             console.log('Slippage changed to:', slippage + '%');
             
             // Show slippage warning for manual swaps only
@@ -4171,10 +4195,50 @@
             }
         }
         
+        // Debug function for slippage input
+        function debugSlippageInput() {
+            const slippageInput = document.getElementById('slippage');
+            if (slippageInput) {
+                console.log('Slippage input found:', slippageInput);
+                console.log('Value:', slippageInput.value);
+                console.log('Disabled:', slippageInput.disabled);
+                console.log('ReadOnly:', slippageInput.readOnly);
+                console.log('Type:', slippageInput.type);
+                
+                // Force enable the input
+                slippageInput.disabled = false;
+                slippageInput.readOnly = false;
+                
+                // Add click listener
+                slippageInput.addEventListener('click', () => {
+                    console.log('Slippage input clicked!');
+                    slippageInput.focus();
+                    slippageInput.select();
+                });
+                
+                // Add focus listener  
+                slippageInput.addEventListener('focus', () => {
+                    console.log('Slippage input focused!');
+                });
+                
+                // Add input listener
+                slippageInput.addEventListener('input', () => {
+                    console.log('Slippage value changed to:', slippageInput.value);
+                });
+            } else {
+                console.error('Slippage input not found!');
+            }
+        }
+        
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', () => {
             // Load pool version settings
             loadPoolVersionSettings();
+            
+            // Debug slippage input
+            setTimeout(() => {
+                debugSlippageInput();
+            }, 1000);
             
             // Check for saved configuration on page load
             const restoredConfig = restoreSnipeConfig();
