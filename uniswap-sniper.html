@@ -2596,13 +2596,45 @@
                 
             } catch (error) {
                 console.error('Token fetch error:', error);
-                balanceEl.textContent = 'Balance: Error';
-                // Only show error if we're connected to wallet
-                if (userAddress) {
-                    statusEl.textContent = 'Invalid token address';
-                    statusEl.className = 'status error';
+                balanceEl.textContent = 'Balance: Unable to fetch';
+                
+                // For new tokens that might not have standard ERC20 functions yet,
+                // still allow monitoring by setting basic info
+                if (ethers.utils.isAddress(tokenAddress)) {
+                    console.log(`Token ${tokenAddress} appears to be new/unlaunched. Allowing monitoring with default values.`);
+                    
+                    const basicInfo = {
+                        address: tokenAddress,
+                        symbol: 'NEW',
+                        decimals: 18, // Assume 18 decimals for new tokens
+                        balance: ethers.BigNumber.from(0)
+                    };
+                    
+                    // Store basic token info to allow monitoring
+                    if (type === 'from') {
+                        window.fromTokenInfo = basicInfo;
+                    } else {
+                        window.toTokenInfo = basicInfo;
+                    }
+                    
+                    // Update UI to show it's a new token
+                    balanceEl.textContent = 'Balance: New token (monitoring allowed)';
+                    updateTokenSymbolLabel(type, 'NEW');
+                    
+                    // Clear error status
+                    statusEl.textContent = '';
+                    statusEl.className = 'status';
+                    
+                    // Check if ready for quote
+                    checkReadyForQuote();
+                } else {
+                    // Only show error for truly invalid addresses
+                    if (userAddress) {
+                        statusEl.textContent = 'Invalid token address';
+                        statusEl.className = 'status error';
+                    }
+                    clearTokenSymbolLabel(type);
                 }
-                clearTokenSymbolLabel(type);
             }
         }
         
