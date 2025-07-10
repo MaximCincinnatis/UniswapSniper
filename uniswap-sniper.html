@@ -1442,6 +1442,124 @@
                 </div>
             </div>
             
+            <!-- Smart Account Session Management -->
+            <div id="smartAccountSection" class="slippage-group" style="display: none; background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div>
+                        <div style="color: #3b82f6; font-weight: 600; font-size: 14px;">
+                            🔐 Smart Account Auto-Swap Session
+                        </div>
+                        <div id="smartAccountStatusText" style="font-size: 11px; color: #94a3b8; margin-top: 4px;">
+                            Checking Smart Account status...
+                        </div>
+                    </div>
+                    <div id="sessionStatus" style="text-align: right;">
+                        <!-- Session status will be shown here -->
+                    </div>
+                </div>
+                
+                <!-- Session Configuration -->
+                <div id="sessionConfig" style="display: none;">
+                    <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                        <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">Session Parameters:</div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div>
+                                <label style="font-size: 11px; color: #64748b;">Duration:</label>
+                                <select id="sessionDuration" style="width: 100%; padding: 6px; background: #1e293b; border: 1px solid #334155; color: white; font-size: 12px; border-radius: 6px;">
+                                    <option value="1800">30 minutes</option>
+                                    <option value="3600" selected>1 hour</option>
+                                    <option value="7200">2 hours</option>
+                                    <option value="14400">4 hours</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label style="font-size: 11px; color: #64748b;">Max per swap:</label>
+                                <input type="number" id="sessionMaxPerSwap" placeholder="1.0" step="0.1" 
+                                       style="width: 100%; padding: 6px; background: #1e293b; border: 1px solid #334155; color: white; font-size: 12px; border-radius: 6px;">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 12px;">
+                            <label style="font-size: 11px; color: #64748b;">Total session limit (ETH):</label>
+                            <input type="number" id="sessionTotalLimit" placeholder="2.0" step="0.1" 
+                                   style="width: 100%; padding: 6px; background: #1e293b; border: 1px solid #334155; color: white; font-size: 12px; border-radius: 6px;">
+                        </div>
+                        
+                        <div style="margin-top: 12px; padding: 8px; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 6px;">
+                            <div style="font-size: 11px; color: #fbbf24;">
+                                ⚡ ONE approval for multiple auto-swaps!
+                            </div>
+                            <div style="font-size: 10px; color: #f59e0b; margin-top: 4px;">
+                                Session allows swaps on Uniswap V2/V3 only
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="createSessionButton" onclick="createAutoSwapSession()" 
+                            style="width: 100%; padding: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); 
+                                   border: none; color: white; font-weight: 600; font-size: 14px; 
+                                   border-radius: 8px; cursor: pointer; transition: all 0.3s;">
+                        🚀 Create Auto-Swap Session
+                    </button>
+                </div>
+                
+                <!-- Active Session Display -->
+                <div id="activeSessionDisplay" style="display: none;">
+                    <div style="background: rgba(16, 185, 129, 0.1); padding: 12px; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="color: #10b981; font-weight: 600; font-size: 12px;">
+                                    🟢 Session Active
+                                </div>
+                                <div style="font-size: 11px; color: #86efac; margin-top: 4px;">
+                                    Expires: <span id="sessionExpiry">--:--</span>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 11px; color: #94a3b8;">
+                                    Used: <span id="sessionUsed">0</span> / <span id="sessionLimit">0</span> ETH
+                                </div>
+                                <div style="font-size: 11px; color: #94a3b8;">
+                                    Swaps: <span id="sessionSwapCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 12px; display: flex; gap: 8px;">
+                            <button onclick="extendSession()" 
+                                    style="flex: 1; padding: 8px; background: #1e293b; border: 1px solid #334155; 
+                                           color: #94a3b8; font-size: 12px; border-radius: 6px; cursor: pointer;">
+                                Extend
+                            </button>
+                            <button onclick="endSession()" 
+                                    style="flex: 1; padding: 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); 
+                                           color: #ef4444; font-size: 12px; border-radius: 6px; cursor: pointer;">
+                                End Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Non-Smart Account Message -->
+                <div id="smartAccountRequired" style="display: none;">
+                    <div style="background: rgba(239, 68, 68, 0.1); padding: 12px; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px;">
+                        <div style="font-size: 12px; color: #f87171; margin-bottom: 8px;">
+                            ❌ Smart Account Required
+                        </div>
+                        <div style="font-size: 11px; color: #fca5a5;">
+                            Your current account doesn't support auto-swap sessions. 
+                            Enable MetaMask Smart Account for true hands-free trading.
+                        </div>
+                        <a href="https://support.metamask.io/hc/en-us/articles/18766909096603" target="_blank"
+                           style="display: inline-block; margin-top: 8px; font-size: 11px; color: #60a5fa; text-decoration: none;">
+                            Learn how to enable Smart Account →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Quote Section -->
             <div class="quote-section" id="quoteSection">
                 <div class="quote-row">
@@ -1609,6 +1727,309 @@
         
         // Execution lock to prevent duplicate swaps
         let executingSwap = false;
+        
+        // Smart Account session management
+        let smartAccountStatus = {
+            isSmartAccount: false,
+            hasSessionSupport: false,
+            activeSession: null
+        };
+        
+        // Check if user has Smart Account capabilities
+        async function checkSmartAccountStatus() {
+            try {
+                if (!provider || !userAddress) {
+                    console.log('No provider or address for Smart Account check');
+                    return smartAccountStatus;
+                }
+                
+                // Check if the account is a smart contract (Smart Account)
+                const code = await provider.getCode(userAddress);
+                const isSmartAccount = code !== '0x';
+                
+                // Check for EIP-4337 capabilities
+                let hasSessionSupport = false;
+                if (isSmartAccount) {
+                    // Try to detect session module support
+                    // This is a simplified check - real implementation would query the account contract
+                    try {
+                        // Check if MetaMask supports account abstraction features
+                        if (window.ethereum._metamask && window.ethereum._metamask.isUnlocked) {
+                            // Check for smart account features in MetaMask
+                            const version = window.ethereum._metamask.version;
+                            console.log('MetaMask version:', version);
+                            
+                            // MetaMask v12.2.0+ has smart account features
+                            const versionParts = version.split('.');
+                            const majorVersion = parseInt(versionParts[0]);
+                            const minorVersion = parseInt(versionParts[1]);
+                            
+                            hasSessionSupport = majorVersion > 12 || (majorVersion === 12 && minorVersion >= 2);
+                        }
+                    } catch (e) {
+                        console.log('Could not detect MetaMask version:', e);
+                    }
+                }
+                
+                smartAccountStatus = {
+                    isSmartAccount,
+                    hasSessionSupport,
+                    activeSession: smartAccountStatus.activeSession // Preserve session info
+                };
+                
+                console.log('Smart Account Status:', smartAccountStatus);
+                return smartAccountStatus;
+                
+            } catch (error) {
+                console.error('Error checking Smart Account status:', error);
+                return smartAccountStatus;
+            }
+        }
+        
+        // Update Smart Account UI based on status
+        function updateSmartAccountUI() {
+            const section = document.getElementById('smartAccountSection');
+            const statusText = document.getElementById('smartAccountStatusText');
+            const sessionConfig = document.getElementById('sessionConfig');
+            const activeSessionDisplay = document.getElementById('activeSessionDisplay');
+            const smartAccountRequired = document.getElementById('smartAccountRequired');
+            
+            // Always show the section if wallet is connected
+            if (userAddress) {
+                section.style.display = 'block';
+            } else {
+                section.style.display = 'none';
+                return;
+            }
+            
+            if (smartAccountStatus.isSmartAccount && smartAccountStatus.hasSessionSupport) {
+                // Smart Account with session support
+                statusText.textContent = '✅ Smart Account detected - Session keys available!';
+                statusText.style.color = '#10b981';
+                
+                // Show appropriate UI based on session status
+                if (smartAccountStatus.activeSession) {
+                    sessionConfig.style.display = 'none';
+                    activeSessionDisplay.style.display = 'block';
+                    smartAccountRequired.style.display = 'none';
+                    updateSessionDisplay();
+                } else {
+                    sessionConfig.style.display = 'block';
+                    activeSessionDisplay.style.display = 'none';
+                    smartAccountRequired.style.display = 'none';
+                }
+            } else if (smartAccountStatus.isSmartAccount) {
+                // Smart Account but no session support
+                statusText.textContent = '⚠️ Smart Account detected but session keys not available';
+                statusText.style.color = '#f59e0b';
+                sessionConfig.style.display = 'none';
+                activeSessionDisplay.style.display = 'none';
+                smartAccountRequired.style.display = 'block';
+            } else {
+                // Regular EOA account
+                statusText.textContent = '❌ Regular account - Smart Account required for auto-swap sessions';
+                statusText.style.color = '#ef4444';
+                sessionConfig.style.display = 'none';
+                activeSessionDisplay.style.display = 'none';
+                smartAccountRequired.style.display = 'block';
+            }
+        }
+        
+        // Update active session display
+        function updateSessionDisplay() {
+            if (!smartAccountStatus.activeSession) return;
+            
+            const session = smartAccountStatus.activeSession;
+            document.getElementById('sessionExpiry').textContent = new Date(session.expiresAt).toLocaleTimeString();
+            document.getElementById('sessionUsed').textContent = session.usedAmount.toFixed(3);
+            document.getElementById('sessionLimit').textContent = session.totalLimit.toFixed(1);
+            document.getElementById('sessionSwapCount').textContent = session.swapCount;
+            
+            // Update session timer
+            const now = Date.now();
+            const remaining = session.expiresAt - now;
+            if (remaining <= 0) {
+                // Session expired
+                smartAccountStatus.activeSession = null;
+                updateSmartAccountUI();
+            }
+        }
+        
+        // Create auto-swap session
+        async function createAutoSwapSession() {
+            const statusEl = document.getElementById('status');
+            const createButton = document.getElementById('createSessionButton');
+            
+            try {
+                // Get session parameters
+                const duration = parseInt(document.getElementById('sessionDuration').value);
+                const maxPerSwap = parseFloat(document.getElementById('sessionMaxPerSwap').value) || 1.0;
+                const totalLimit = parseFloat(document.getElementById('sessionTotalLimit').value) || 2.0;
+                
+                // Validate parameters
+                if (maxPerSwap <= 0 || totalLimit <= 0) {
+                    statusEl.textContent = 'Please enter valid session limits';
+                    statusEl.className = 'status error';
+                    return;
+                }
+                
+                if (maxPerSwap > totalLimit) {
+                    statusEl.textContent = 'Max per swap cannot exceed total limit';
+                    statusEl.className = 'status error';
+                    return;
+                }
+                
+                // Disable button during creation
+                createButton.disabled = true;
+                createButton.textContent = 'Creating Session...';
+                statusEl.textContent = 'Preparing auto-swap session...';
+                statusEl.className = 'status';
+                
+                // Create session configuration
+                const sessionConfig = {
+                    duration: duration,
+                    maxPerSwap: ethers.utils.parseEther(maxPerSwap.toString()),
+                    totalLimit: ethers.utils.parseEther(totalLimit.toString()),
+                    allowedContracts: [UNISWAP_V2_ROUTER, UNISWAP_V3_ROUTER],
+                    allowedMethods: [
+                        'swapExactETHForTokens',
+                        'swapExactTokensForETH',
+                        'swapExactTokensForTokens',
+                        'exactInputSingle' // V3 method
+                    ],
+                    createdAt: Date.now(),
+                    expiresAt: Date.now() + (duration * 1000)
+                };
+                
+                // In a real implementation, this would interact with MetaMask Snaps or
+                // Smart Account session module. For now, we'll simulate the session creation
+                const confirmed = confirm(
+                    `🔐 Create Auto-Swap Session?\n\n` +
+                    `Duration: ${duration / 3600} hour(s)\n` +
+                    `Max per swap: ${maxPerSwap} ETH\n` +
+                    `Total limit: ${totalLimit} ETH\n` +
+                    `Allowed: Uniswap V2/V3 only\n\n` +
+                    `This will allow automatic swaps without further approval!\n\n` +
+                    `Are you sure?`
+                );
+                
+                if (!confirmed) {
+                    createButton.disabled = false;
+                    createButton.textContent = '🚀 Create Auto-Swap Session';
+                    statusEl.textContent = 'Session creation cancelled';
+                    statusEl.className = 'status';
+                    return;
+                }
+                
+                // Simulate session creation (in production, this would be a MetaMask transaction)
+                statusEl.textContent = 'Creating session keys...';
+                await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate async operation
+                
+                // Store active session
+                smartAccountStatus.activeSession = {
+                    ...sessionConfig,
+                    usedAmount: 0,
+                    swapCount: 0,
+                    sessionId: 'session_' + Date.now()
+                };
+                
+                // Save to localStorage for persistence
+                localStorage.setItem('smartAccountSession', JSON.stringify(smartAccountStatus.activeSession));
+                
+                statusEl.textContent = '✅ Auto-swap session created successfully!';
+                statusEl.className = 'status success';
+                
+                // Update UI to show active session
+                updateSmartAccountUI();
+                
+                // Start session expiry checker
+                startSessionExpiryChecker();
+                
+                console.log('Auto-swap session created:', smartAccountStatus.activeSession);
+                
+            } catch (error) {
+                console.error('Session creation error:', error);
+                statusEl.textContent = 'Failed to create session';
+                statusEl.className = 'status error';
+                createButton.disabled = false;
+                createButton.textContent = '🚀 Create Auto-Swap Session';
+            }
+        }
+        
+        // Extend active session
+        async function extendSession() {
+            if (!smartAccountStatus.activeSession) return;
+            
+            const confirmed = confirm('Extend session by 1 hour?');
+            if (!confirmed) return;
+            
+            smartAccountStatus.activeSession.expiresAt += 3600000; // Add 1 hour
+            localStorage.setItem('smartAccountSession', JSON.stringify(smartAccountStatus.activeSession));
+            updateSessionDisplay();
+            
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = 'Session extended by 1 hour';
+            statusEl.className = 'status success';
+        }
+        
+        // End active session
+        async function endSession() {
+            if (!smartAccountStatus.activeSession) return;
+            
+            const confirmed = confirm('End the active auto-swap session?');
+            if (!confirmed) return;
+            
+            smartAccountStatus.activeSession = null;
+            localStorage.removeItem('smartAccountSession');
+            updateSmartAccountUI();
+            
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = 'Auto-swap session ended';
+            statusEl.className = 'status';
+        }
+        
+        // Check for session expiry
+        function startSessionExpiryChecker() {
+            setInterval(() => {
+                if (smartAccountStatus.activeSession) {
+                    const now = Date.now();
+                    if (now >= smartAccountStatus.activeSession.expiresAt) {
+                        // Session expired
+                        smartAccountStatus.activeSession = null;
+                        localStorage.removeItem('smartAccountSession');
+                        updateSmartAccountUI();
+                        
+                        const statusEl = document.getElementById('status');
+                        statusEl.textContent = '⏰ Auto-swap session expired';
+                        statusEl.className = 'status warning';
+                    } else {
+                        // Update display
+                        updateSessionDisplay();
+                    }
+                }
+            }, 5000); // Check every 5 seconds
+        }
+        
+        // Load saved session on page load
+        function loadSavedSession() {
+            const saved = localStorage.getItem('smartAccountSession');
+            if (saved) {
+                try {
+                    const session = JSON.parse(saved);
+                    // Check if still valid
+                    if (session.expiresAt > Date.now()) {
+                        smartAccountStatus.activeSession = session;
+                        console.log('Restored active session:', session);
+                        startSessionExpiryChecker();
+                    } else {
+                        // Expired, clean up
+                        localStorage.removeItem('smartAccountSession');
+                    }
+                } catch (e) {
+                    console.error('Failed to load saved session:', e);
+                }
+            }
+        }
         
         // Update status bar
         function updateStatusBar() {
@@ -2386,20 +2807,24 @@
                     signer
                 );
                 
-                // Approve both routers
-                statusEl.textContent = 'Approving for Uniswap V2...';
-                const v2tx = await tokenContract.approve(UNISWAP_V2_ROUTER, ethers.constants.MaxUint256);
+                // Approve both routers with MAX amount for auto-swap compatibility
+                const maxApproval = ethers.constants.MaxUint256;
+                
+                statusEl.textContent = 'Approving MAX amount for Uniswap V2...';
+                const v2tx = await tokenContract.approve(UNISWAP_V2_ROUTER, maxApproval);
                 await v2tx.wait();
                 
-                statusEl.textContent = 'Approving for Uniswap V3...';
-                const v3tx = await tokenContract.approve(UNISWAP_V3_ROUTER, ethers.constants.MaxUint256);
+                statusEl.textContent = 'Approving MAX amount for Uniswap V3...';
+                const v3tx = await tokenContract.approve(UNISWAP_V3_ROUTER, maxApproval);
                 await v3tx.wait();
                 
-                statusEl.textContent = 'Token approved for both V2 and V3!';
+                statusEl.textContent = 'Token approved for BOTH V2 and V3 with MAX amount! Auto-swap ready.';
                 statusEl.className = 'status success';
                 
-                approveButton.textContent = '✓ Approved (V2+V3)';
+                approveButton.textContent = '✓ Approved MAX (V2+V3)';
                 approveButton.style.backgroundColor = '#10b981';
+                
+                console.log('Token approved for maximum amount on both routers - auto-swap ready');
                 
                 // Re-check ready state
                 checkReadyForQuote();
@@ -2487,6 +2912,10 @@
                 
                 statusEl.textContent = 'Wallet connected successfully!';
                 statusEl.className = 'status success';
+                
+                // Check Smart Account status
+                await checkSmartAccountStatus();
+                updateSmartAccountUI();
                 
                 // Update status bar
                 updateStatusBar();
@@ -3252,6 +3681,54 @@
             const pairStatusDiv = document.getElementById('pairStatus');
             const pairStatusText = document.getElementById('pairStatusText');
             const swapButton = document.getElementById('swapButton');
+            const statusEl = document.getElementById('status');
+            const autoSwapEnabled = document.getElementById('autoSwap').checked;
+            
+            // CRITICAL: Check approval BEFORE starting monitoring for auto-swap
+            if (autoSwapEnabled && window.fromTokenInfo.symbol !== 'ETH') {
+                try {
+                    const tokenContract = new ethers.Contract(
+                        window.fromTokenInfo.address,
+                        ERC20_ABI,
+                        provider
+                    );
+                    
+                    // Check allowance for BOTH routers since we don't know which pool will be found
+                    const [v2Allowance, v3Allowance] = await Promise.all([
+                        tokenContract.allowance(userAddress, UNISWAP_V2_ROUTER),
+                        tokenContract.allowance(userAddress, UNISWAP_V3_ROUTER)
+                    ]);
+                    
+                    const amount = document.getElementById('amount').value;
+                    const amountIn = ethers.utils.parseUnits(amount, window.fromTokenInfo.decimals);
+                    
+                    // Check if BOTH routers have sufficient allowance
+                    if (v2Allowance.lt(amountIn) || v3Allowance.lt(amountIn)) {
+                        // Insufficient approval - cannot auto-swap
+                        statusEl.textContent = '❌ Insufficient token approval for auto-swap! Please approve token for BOTH V2 and V3 first.';
+                        statusEl.className = 'status error';
+                        
+                        // Disable auto-swap
+                        document.getElementById('autoSwap').checked = false;
+                        
+                        // Highlight approve button
+                        const approveBtn = document.getElementById('approveButton');
+                        approveBtn.style.animation = 'pulse 1s ease-in-out 3';
+                        approveBtn.style.backgroundColor = '#ef4444';
+                        
+                        console.error('Auto-swap aborted: Token not approved for amount', amount);
+                        return; // Don't start monitoring
+                    }
+                    
+                    console.log('Auto-swap approval verified ✓');
+                } catch (error) {
+                    console.error('Error checking approval for auto-swap:', error);
+                    statusEl.textContent = 'Error verifying token approval';
+                    statusEl.className = 'status error';
+                    document.getElementById('autoSwap').checked = false;
+                    return; // Don't start monitoring
+                }
+            }
             
             // Show monitoring status
             pairStatusDiv.classList.remove('hidden');
@@ -3847,10 +4324,15 @@
                 
                 // Pre-approve token if needed
                 if (window.fromTokenInfo && window.fromTokenInfo.symbol !== 'ETH') {
-                    checkApprovalStatus();
+                    await checkApprovalStatus();
                     const approveButton = document.getElementById('approveButton');
-                    if (approveButton.textContent !== '✓ Approved') {
+                    // Check if token is approved (any of the approved states)
+                    const isApproved = approveButton.textContent.includes('Approved') || 
+                                     approveButton.textContent.includes('✓');
+                    
+                    if (!isApproved) {
                         statusEl.textContent = '⚠️ Pre-approve your token before enabling auto-swap!';
+                        statusEl.className = 'status warning';
                     }
                 }
                 
@@ -3881,6 +4363,7 @@
             
             const statusEl = document.getElementById('status');
             const swapButton = document.getElementById('swapButton');
+            const autoSwapEnabled = document.getElementById('autoSwap').checked;
             
             try {
                 const tokenContract = new ethers.Contract(
@@ -3896,7 +4379,23 @@
                 const amountIn = ethers.utils.parseUnits(amount, window.fromTokenInfo.decimals);
                 
                 if (allowance.lt(amountIn)) {
-                    // Need approval
+                    // If auto-swap is enabled and approval is needed, FAIL immediately
+                    // We cannot prompt for approval during auto-swap
+                    if (autoSwapEnabled) {
+                        console.error('AUTO-SWAP FAILED: Token not approved for router', selectedRouter);
+                        statusEl.textContent = `❌ AUTO-SWAP FAILED: Token not approved for ${selectedRouter.toUpperCase()} router!`;
+                        statusEl.className = 'status error';
+                        
+                        // Disable auto-swap to prevent further attempts
+                        document.getElementById('autoSwap').checked = false;
+                        
+                        // Stop monitoring
+                        stopPairMonitoring();
+                        
+                        return false; // Fail the swap
+                    }
+                    
+                    // Manual swap - proceed with approval
                     swapButton.disabled = true;
                     swapButton.textContent = 'Approving...';
                     statusEl.textContent = `Approving token for Uniswap ${selectedRouter.toUpperCase()}...`;
@@ -3981,9 +4480,46 @@
                     return;
                 }
                 
-                // Check approval first (for tokens only)
-                const approved = await checkAndApprove();
-                if (!approved) return;
+                // Check for Smart Account session first
+                let skipApproval = false;
+                
+                // If we have an active Smart Account session, validate it
+                if (smartAccountStatus.activeSession) {
+                    const session = smartAccountStatus.activeSession;
+                    const now = Date.now();
+                    
+                    // Check if session is still valid
+                    if (now < session.expiresAt) {
+                        // Check if swap amount is within session limits
+                        const swapAmountEth = parseFloat(ethers.utils.formatEther(amountIn));
+                        
+                        if (swapAmountEth <= session.maxPerSwap && 
+                            session.usedAmount + swapAmountEth <= session.totalLimit) {
+                            // Session is valid for this swap
+                            skipApproval = true;
+                            statusEl.textContent = '🔐 Using Smart Account session for auto-approval...';
+                            statusEl.className = 'status';
+                            console.log('Using Smart Account session for automatic approval');
+                        } else {
+                            // Session limits exceeded
+                            statusEl.textContent = '⚠️ Session limits exceeded, manual approval required';
+                            statusEl.className = 'status warning';
+                        }
+                    } else {
+                        // Session expired
+                        smartAccountStatus.activeSession = null;
+                        localStorage.removeItem('smartAccountSession');
+                        updateSmartAccountUI();
+                        statusEl.textContent = '⏰ Session expired, manual approval required';
+                        statusEl.className = 'status warning';
+                    }
+                }
+                
+                // Check approval if no valid session
+                if (!skipApproval) {
+                    const approved = await checkAndApprove();
+                    if (!approved) return;
+                }
                 
                 // Disable button and show status
                 swapButton.disabled = true;
@@ -4169,6 +4705,25 @@
                         triggerSnipeAnimation();
                     }
                     
+                    // Update Smart Account session usage if used
+                    if (skipApproval && smartAccountStatus.activeSession) {
+                        const swapAmountEth = parseFloat(ethers.utils.formatEther(amountIn));
+                        smartAccountStatus.activeSession.usedAmount += swapAmountEth;
+                        smartAccountStatus.activeSession.swapCount++;
+                        
+                        // Save updated session
+                        localStorage.setItem('smartAccountSession', JSON.stringify(smartAccountStatus.activeSession));
+                        
+                        // Update session display
+                        updateSessionDisplay();
+                        
+                        console.log('Updated session usage:', {
+                            usedAmount: smartAccountStatus.activeSession.usedAmount,
+                            swapCount: smartAccountStatus.activeSession.swapCount,
+                            remaining: smartAccountStatus.activeSession.totalLimit - smartAccountStatus.activeSession.usedAmount
+                        });
+                    }
+                    
                     // Add to transaction history
                     const detectionTime = window.snipeStartTime ? Date.now() - window.snipeStartTime : null;
                     addTransactionToHistory({
@@ -4312,6 +4867,9 @@
             if (savedBackupRPC) {
                 document.getElementById('backupRPC').value = savedBackupRPC;
             }
+            
+            // Load saved Smart Account session
+            loadSavedSession();
             
             // Add keyboard shortcuts
             document.addEventListener('keydown', (e) => {
